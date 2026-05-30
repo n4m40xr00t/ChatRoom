@@ -120,16 +120,38 @@ class WebRTCCallManager {
     this.remotePeer = null;
     this.pendingOffer = null;
 
-    // WebRTC configuration with STUN servers for NAT traversal
+    // WebRTC configuration with STUN + TURN servers for NAT traversal.
+    // TURN servers are essential when both peers are behind NAT (e.g. cloud / mobile).
+    // Using free public TURN servers from openrelay.metered.ca — no registration needed.
     this.rtcConfig = {
       iceServers: [
+        // Google STUN (fast, good for same-network calls)
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
+        // Open Relay free TURN servers — required for cross-NAT / cloud deployment
+        {
+          urls: "turn:openrelay.metered.ca:80",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443?transport=tcp",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+        {
+          urls: "turns:openrelay.metered.ca:443",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
       ],
       iceCandidatePoolSize: 10,
+      iceTransportPolicy: "all",  // 'all' = try direct first, then TURN
     };
 
     this.initializeUI();
@@ -655,7 +677,7 @@ class WebRTCCallManager {
    * @param {number} timeout - Maximum ms to wait (default 6000)
    * @returns {Promise<void>}
    */
-  waitForIceGathering(timeout = 6000) {
+  waitForIceGathering(timeout = 10000) {
     return new Promise((resolve) => {
       if (
         !this.peerConnection ||
@@ -670,6 +692,7 @@ class WebRTCCallManager {
           "icegatheringstatechange",
           onStateChange,
         );
+        console.warn("[WebRTC] ICE gathering timed out — proceeding with partial candidates");
         resolve();
       }, timeout);
 

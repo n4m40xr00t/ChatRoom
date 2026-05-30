@@ -57,10 +57,17 @@
    * Send /app/call-ring via the chat page's WebSocket and wait for the callId.
    * Returns the callId string on success, or null if rejected / timed out.
    */
-  function ringCallee(targetUser, callType) {
+  async function ringCallee(targetUser, callType) {
+    // Pre-flight: clean up any stale "ringing" sessions from a previous crash
+    // so the server doesn't falsely reject with "already in active call".
+    try { await fetch("/api/calls/cleanup", { method: "POST" }); } catch (_) {}
+
     return new Promise((resolve) => {
-      // Safety: if the stompClient isn't ready, fall back without a callId
-      if (!window.stompClient || !window.stompClient.connected) {
+      // Use the robust client check — .connected can be unreliable on StompJS 2.3.3
+      const client = window.stompClient;
+      const isConnected = client && (client.connected || (client.ws && client.ws.readyState === 1));
+      if (!isConnected) {
+        console.warn("[CallIntegration] ringCallee: STOMP not connected, proceeding without callId");
         resolve(null);
         return;
       }
@@ -68,10 +75,11 @@
       _ringResolve = resolve;
       _ringTimer = setTimeout(() => {
         _ringResolve = null;
+        _ringTimer = null;
         resolve(null); // timed out — let the call window handle it
-      }, 5000);
+      }, 8000);
 
-      window.stompClient.send(
+      client.send(
         "/app/call-ring",
         {},
         JSON.stringify({

@@ -261,7 +261,7 @@
         <!-- ═══════════════════════════════════════════════════
      SCRIPTS
 ════════════════════════════════════════════════════ -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
         <script src="/js/webrtc-call.js"></script>
 
@@ -507,7 +507,11 @@
                 }
 
                 // ── WebSocket connect ──────────────────────────────────
-                function connectWS() {
+                function connectWS(attempt) {
+                    attempt = attempt || 1;
+                    const MAX_ATTEMPTS = 3;
+
+                    console.log(`[Call] WS connect attempt ${attempt}/${MAX_ATTEMPTS}`);
                     const socket = new SockJS("/ws");
                     stompClient = Stomp.over(socket);
                     stompClient.debug = null;
@@ -535,8 +539,14 @@
                             }
                         },
                         function (err) {
-                            console.error("[Call] WS error", err);
-                            fatalError("Connection failed. Please try again.");
+                            console.error("[Call] WS error (attempt " + attempt + ")", err);
+                            if (attempt < MAX_ATTEMPTS) {
+                                const delay = attempt * 1500;
+                                console.log("[Call] Retrying in " + delay + "ms...");
+                                setTimeout(() => connectWS(attempt + 1), delay);
+                            } else {
+                                fatalError("Connection failed. Please refresh the page and try again.");
+                            }
                         },
                     );
                 }
