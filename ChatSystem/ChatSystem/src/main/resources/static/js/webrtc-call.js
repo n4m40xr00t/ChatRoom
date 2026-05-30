@@ -766,6 +766,9 @@ class WebRTCCallManager {
 
   /**
    * Get local media stream with adaptive quality constraints.
+   * IMPORTANT: Always use landscape (width > height) regardless of device.
+   * Requesting portrait dimensions (720x1280) causes the phone camera to
+   * capture vertically, which then gets heavily cropped by object-fit:cover.
    */
   async getLocalStream(callType) {
     const isLikelyMobile =
@@ -778,10 +781,24 @@ class WebRTCCallManager {
     const minDim = Math.min(vw, vh);
     const isPhone = isLikelyMobile && minDim <= 700;
 
-    // Progressive constraints: try HD first, fall back to lower res if denied
+    // Always landscape (width > height) — video calls are always horizontal.
+    // Mobile: 640x480 (VGA) is universally supported and avoids cropping.
+    // Desktop: 1280x720 HD.
     const videoConstraints = isPhone
-      ? { width: { ideal: 720 }, height: { ideal: 1280 }, frameRate: { ideal: 30, max: 30 }, facingMode: "user" }
-      : { width: { ideal: 1280, max: 1920 }, height: { ideal: 720, max: 1080 }, frameRate: { ideal: 30, max: 60 }, facingMode: "user" };
+      ? {
+          width:  { ideal: 640 },
+          height: { ideal: 480 },
+          aspectRatio: { ideal: 4 / 3 },
+          frameRate: { ideal: 30, max: 30 },
+          facingMode: "user",
+        }
+      : {
+          width:  { ideal: 1280, max: 1920 },
+          height: { ideal: 720,  max: 1080 },
+          aspectRatio: { ideal: 16 / 9 },
+          frameRate: { ideal: 30, max: 60 },
+          facingMode: "user",
+        };
 
     const constraints = {
       audio: {
@@ -799,20 +816,24 @@ class WebRTCCallManager {
       if (err.name === "InsecureContextError" || err.name === "NotSupportedError") {
         throw err;
       }
-      // Retry with minimal constraints on OverconstrainedError
-      if (callType === "video" && (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError")) {
-        console.warn("[WebRTC] HD constraints failed, retrying with basic video");
+      // Retry with bare minimum constraints on any constraint error
+      if (callType === "video" && (
+        err.name === "OverconstrainedError" ||
+        err.name === "ConstraintNotSatisfiedError" ||
+        err.name === "NotFoundError" ||
+        err.name === "NotReadableError"
+      )) {
+        console.warn("[WebRTC] Constraints failed (" + err.name + "), retrying with basic video");
         try {
-          this.localStream = await getUserMediaSafe({ audio: constraints.audio, video: { facingMode: "user" } });
+          this.localStream = await getUserMediaSafe({
+            audio: constraints.audio,
+            video: { facingMode: "user" },
+          });
         } catch (err2) {
           this.showNotification("Camera unavailable — starting audio call instead", "warning");
           this.currentCallType = "audio";
           this.localStream = await getUserMediaSafe({ audio: constraints.audio });
         }
-      } else if (callType === "video" && (err.name === "NotFoundError" || err.name === "NotReadableError")) {
-        this.showNotification("Camera unavailable — starting audio call instead", "warning");
-        this.currentCallType = "audio";
-        this.localStream = await getUserMediaSafe({ audio: constraints.audio });
       } else {
         throw err;
       }
@@ -821,8 +842,10 @@ class WebRTCCallManager {
     const localVideo = document.getElementById("local-video");
     if (localVideo) {
       localVideo.srcObject = this.localStream;
-      // Mirror local preview (selfie/front-camera view)
-      localVideo.style.transform = "scaleX(-1)";
+      // Mirror the selfie/front-cam view so it feels natural
+      if (callType === "video") {
+        localVideo.style.transform = "scaleX(-1)";
+      }
     }
 
     // Hide video elements for audio-only calls
@@ -833,6 +856,7 @@ class WebRTCCallManager {
       if (rv) rv.style.display = "none";
     }
   }
+
 
   /**
    * Toggle audio mute

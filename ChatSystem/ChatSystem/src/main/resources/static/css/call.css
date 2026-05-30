@@ -941,18 +941,27 @@ body {
         height: 190px;
     }
 
+    /* PiP: landscape on mobile — 4:3 matches 640x480 capture */
     .cr-local-pip {
-        width: 110px;
-        height: 156px;
+        width: 130px;
+        height: 98px;
         bottom: 110px;
         right: 12px;
     }
 
     .cr-screen--active.cr-layout-local-full .cr-video-remote {
-        width: 110px;
-        height: 156px;
+        width: 130px;
+        height: 98px;
         bottom: 110px;
         right: 12px;
+    }
+
+    /* Use contain on mobile to avoid cropping when camera aspect ratio
+       doesn't perfectly match the screen (common on Android/iOS) */
+    .cr-video-remote,
+    .cr-video-local {
+        object-fit: contain;
+        background: #000;
     }
 
     .cr-controls-bar {
