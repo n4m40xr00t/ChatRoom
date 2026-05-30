@@ -1,0 +1,12 @@
+.git
+.idea
+.vscode
+target/
+ChatSystem/ChatSystem/target/
+.mvn
+mvnw
+mvnw.cmd
+chatdb.mv.db
+uploads/
+.uploads/
+*.p12
