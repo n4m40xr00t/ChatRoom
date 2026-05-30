@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme ?: 'dark'}, data-chatbg=${chatBg ?: 'none'}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — ChatRoom</title>
+  <meta name="username" id="currentUsername" th:content="${username}"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-bold-rounded/css/uicons-bold-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/variables.css"/>
+  <link rel="stylesheet" href="/css/reset.css"/>
+  <link rel="stylesheet" href="/css/loading.css"/>
+  <link rel="stylesheet" href="/css/header.css"/>
+  <link rel="stylesheet" href="/css/settings.css"/>
+  <link rel="stylesheet" href="/css/mfa.css"/>
+  <link rel="stylesheet" href="/css/themes.css"/>
+
+  <!-- Theme (no defer — must run before render to avoid flash) -->
+  <script src="/js/theme.js"></script>
+
+  <!-- Scripts -->
+  <script defer src="/js/jquery.js"></script>
+  <script defer src="/js/loading.js"></script>
+  <script defer src="/js/settings.js"></script>
+</head>
+
+<body>
+
+  <!-- Loader -->
+  <div class="loader_container" id="loader_cont_id">
+    <div class="lds-roller" id="loader_main_id">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div class="problem" id="problem_id">
+      Do you have any problem? <a href="#">Contact us</a> now.
+    </div>
+    <div class="by_who" id="by_who_id">by Natiq</div>
+  </div>
+
+  <!-- Header -->
+  <div th:replace="~{header :: headerFragment}"></div>
+
+  <!-- Page -->
+  <div class="settings-wrap">
+
+    <div class="settings-layout">
+
+      <!-- Mobile tab bar (visible on small screens) -->
+      <div class="settings-mobile-tabs" id="settings-mobile-tabs">
+        <button class="settings-tab active" data-tab="dashboard">
+          <i class="fi fi-sr-apps"></i>
+          <span>Overview</span>
+        </button>
+        <button class="settings-tab" data-tab="profile">
+          <i class="fi fi-sr-user"></i>
+          <span>Profile</span>
+        </button>
+        <button class="settings-tab" data-tab="appearance">
+          <i class="fi fi-sr-palette"></i>
+          <span>Appearance</span>
+        </button>
+        <button class="settings-tab" data-tab="privacy">
+          <i class="fi fi-sr-shield"></i>
+          <span>Privacy</span>
+        </button>
+        <button class="settings-tab" data-tab="security">
+          <i class="fi fi-sr-shield-check"></i>
+          <span>Security</span>
+        </button>
+        <button class="settings-tab" data-tab="account">
+          <i class="fi fi-sr-archive"></i>
+          <span>Account</span>
+        </button>
+      </div>
+
+      <div class="settings-body">
+
+        <!-- Desktop sidebar -->
+        <nav class="settings-sidebar" id="settings-sidebar">
+          <div class="settings-sidebar-title">Settings</div>
+          <button class="settings-tab active" data-tab="dashboard">
+            <i class="fi fi-sr-apps"></i>
+            <span>Overview</span>
+          </button>
+          <button class="settings-tab" data-tab="profile">
+            <i class="fi fi-sr-user"></i>
+            <span>Profile</span>
+          </button>
+          <button class="settings-tab" data-tab="appearance">
+            <i class="fi fi-sr-palette"></i>
+            <span>Appearance</span>
+          </button>
+          <button class="settings-tab" data-tab="privacy">
+            <i class="fi fi-sr-shield"></i>
+            <span>Privacy</span>
+          </button>
+          <button class="settings-tab" data-tab="security">
+            <i class="fi fi-sr-shield-check"></i>
+            <span>Security</span>
+          </button>
+          <button class="settings-tab" data-tab="account">
+            <i class="fi fi-sr-archive"></i>
+            <span>Account</span>
+          </button>
+        </nav>
+
+        <!-- Content -->
+        <div class="settings-content" id="settings-content">
+
+          <!-- Dashboard row (visible in Overview tab) -->
+          <div class="dashboard-section" id="dashboard-section" data-section="dashboard">
+            <div class="dashboard-row" id="dashboard-row">
+              <div class="dashboard-loading"><i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i></div>
+            </div>
+          </div>
+
+          <!-- Alerts -->
+          <div id="settings-alert-box"></div>
+          <div th:if="${successMessage}" class="settings-alert settings-alert-success">
+            <i class="fi fi-sr-check-circle"></i>
+            <span th:text="${successMessage}"></span>
+          </div>
+          <div th:if="${errorMessage}" class="settings-alert settings-alert-error">
+            <i class="fi fi-sr-exclamation"></i>
+            <span th:text="${errorMessage}"></span>
+          </div>
+
+          <!-- Cards grid -->
+          <div class="settings-grid" id="settings-grid">
+
+            <!-- ============ PROFILE CARD ============ -->
+            <div class="settings-card full-width" data-section="profile">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-user"></i> Profile Information
+              </div>
+              <div class="settings-avatar-section">
+                <div class="settings-avatar-wrap">
+                  <div class="settings-avatar" id="settings-avatar-preview">
+                    <img th:if="${user.profilePicture != null}" th:src="${user.profilePicture}" alt="Profile" id="avatar-img"/>
+                    <span th:unless="${user.profilePicture != null}"
+                          th:text="${user.fullname != null} ? ${#strings.toUpperCase(#strings.substring(user.fullname,0,1))} : '?'"
+                          id="avatar-initial"></span>
+                  </div>
+                  <label for="settings-photo-input" class="settings-avatar-upload-btn" title="Change photo">
+                    <i class="fi fi-sr-camera"></i>
+                  </label>
+                </div>
+                <div class="settings-avatar-info">
+                  <div class="settings-avatar-name" th:text="${user.fullname}">Full Name</div>
+                  <div class="settings-avatar-username" th:text="'@' + ${username}">@username</div>
+                  <div class="settings-avatar-email" th:text="${user.email}">email@example.com</div>
+                </div>
+              </div>
+              <form id="profile-form" enctype="multipart/form-data">
+                <input type="file" id="settings-photo-input" name="profilePhoto" accept="image/*" style="display:none"/>
+                <div class="settings-form-grid">
+                  <div class="settings-field">
+                    <label class="settings-label">First Name</label>
+                    <input type="text" name="name" id="settings-name" class="settings-input"
+                           th:value="${user.name}" placeholder="First name"/>
+                  </div>
+                  <div class="settings-field">
+                    <label class="settings-label">Last Name</label>
+                    <input type="text" name="surname" id="settings-surname" class="settings-input"
+                           th:value="${user.surname}" placeholder="Last name"/>
+                  </div>
+                  <div class="settings-field settings-form-full">
+                    <label class="settings-label">Email</label>
+                    <input type="email" name="email" id="settings-email" class="settings-input"
+                           th:value="${user.email}" placeholder="email@example.com"/>
+                  </div>
+                  <div class="settings-field settings-form-full">
+                    <label class="settings-label">Bio</label>
+                    <textarea name="bio" id="settings-bio" class="settings-input" placeholder="Tell us about yourself (max 280 chars)" maxlength="280" style="resize:vertical;min-height:70px;max-width:100%;padding:10px 14px;font-family:var(--font-body);" th:text="${user.bio}"></textarea>
+                  </div>
+                </div>
+                <button type="submit" class="settings-submit-btn" id="save-profile-btn">
+                  <i class="fi fi-sr-disk"></i> Save Changes
+                </button>
+              </form>
+            </div>
+
+            <!-- ============ PASSWORD CARD ============ -->
+            <div class="settings-card" data-section="security">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-lock"></i> Change Password
+              </div>
+              <form id="password-form">
+                <div class="settings-form-grid">
+                  <div class="settings-field settings-form-full">
+                    <label class="settings-label">Current Password</label>
+                    <div class="settings-pw-wrap">
+                      <input type="password" name="currentPassword" id="current-password" class="settings-input"
+                             placeholder="Enter current password"/>
+                      <button type="button" class="settings-pw-toggle" onclick="togglePw('current-password', this)">
+                        <i class="fi fi-rr-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="settings-field">
+                    <label class="settings-label">New Password</label>
+                    <div class="settings-pw-wrap">
+                      <input type="password" name="newPassword" id="new-password" class="settings-input"
+                             placeholder="New password"/>
+                      <button type="button" class="settings-pw-toggle" onclick="togglePw('new-password', this)">
+                        <i class="fi fi-rr-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="settings-field">
+                    <label class="settings-label">Confirm Password</label>
+                    <div class="settings-pw-wrap">
+                      <input type="password" name="confirmPassword" id="confirm-password" class="settings-input"
+                             placeholder="Repeat new password"/>
+                      <button type="button" class="settings-pw-toggle" onclick="togglePw('confirm-password', this)">
+                        <i class="fi fi-rr-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" class="settings-submit-btn" id="save-password-btn">
+                  <i class="fi fi-sr-lock"></i> Update Password
+                </button>
+              </form>
+            </div>
+
+            <!-- ============ TWO-FACTOR AUTHENTICATION CARD ============ -->
+            <div class="settings-card" data-section="security">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-shield-check"></i> Two-Factor Authentication
+              </div>
+              <div class="mfa-status-row" id="mfa-status-row">
+                <div class="mfa-status-info">
+                  <div class="mfa-status-icon disabled" id="mfa-status-icon">
+                    <i class="fi fi-sr-shield" id="mfa-status-icon-i"></i>
+                  </div>
+                  <div class="mfa-status-text">
+                    <div class="mfa-status-label" id="mfa-status-label">Loading…</div>
+                    <div class="mfa-status-desc" id="mfa-status-desc">Checking MFA status…</div>
+                  </div>
+                </div>
+                <button class="mfa-toggle-btn enable" id="mfa-toggle-btn" style="display:none;">
+                  <i class="fi fi-sr-shield-plus" id="mfa-toggle-icon"></i>
+                  <span id="mfa-toggle-text">Enable</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- ============ ACTIVE SESSIONS CARD ============ -->
+            <div class="settings-card" data-section="security">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-computer"></i> Active Sessions
+              </div>
+              <div class="settings-sessions-list" id="active-sessions-list">
+                <!-- Sessions loaded via AJAX -->
+              </div>
+            </div>
+
+            <!-- ============ APPEARANCE CARD ============ -->
+            <div class="settings-card full-width" data-section="appearance">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-palette"></i> Appearance
+              </div>
+              <div class="theme-section">
+                <div class="theme-section-label">Color Theme</div>
+                <div class="theme-swatches" id="theme-swatches">
+                  <button class="theme-swatch" data-theme="dark" title="Dark">
+                    <div class="theme-swatch-preview">
+                      <div class="tsw-bg" style="background:#080a0f;"></div>
+                      <div class="tsw-surface" style="background:#13161c;border-color:rgba(255,255,255,0.13);"></div>
+                      <div class="tsw-accent" style="background:#2563eb;"></div>
+                    </div>
+                    <span class="theme-swatch-name">Dark</span>
+                    <i class="fi fi-sr-check theme-swatch-check"></i>
+                  </button>
+                  <button class="theme-swatch" data-theme="midnight" title="Midnight">
+                    <div class="theme-swatch-preview">
+                      <div class="tsw-bg" style="background:#07050f;"></div>
+                      <div class="tsw-surface" style="background:#161224;border-color:rgba(167,139,250,0.18);"></div>
+                      <div class="tsw-accent" style="background:#7c3aed;"></div>
+                    </div>
+                    <span class="theme-swatch-name">Midnight</span>
+                    <i class="fi fi-sr-check theme-swatch-check"></i>
+                  </button>
+                  <button class="theme-swatch" data-theme="ocean" title="Ocean">
+                    <div class="theme-swatch-preview">
+                      <div class="tsw-bg" style="background:#020d12;"></div>
+                      <div class="tsw-surface" style="background:#0c2030;border-color:rgba(34,211,238,0.18);"></div>
+                      <div class="tsw-accent" style="background:#0891b2;"></div>
+                    </div>
+                    <span class="theme-swatch-name">Ocean</span>
+                    <i class="fi fi-sr-check theme-swatch-check"></i>
+                  </button>
+                  <button class="theme-swatch" data-theme="forest" title="Forest">
+                    <div class="theme-swatch-preview">
+                      <div class="tsw-bg" style="background:#030a05;"></div>
+                      <div class="tsw-surface" style="background:#0d1f10;border-color:rgba(74,222,128,0.17);"></div>
+                      <div class="tsw-accent" style="background:#16a34a;"></div>
+                    </div>
+                    <span class="theme-swatch-name">Forest</span>
+                    <i class="fi fi-sr-check theme-swatch-check"></i>
+                  </button>
+                  <button class="theme-swatch" data-theme="rose" title="Rose">
+                    <div class="theme-swatch-preview">
+                      <div class="tsw-bg" style="background:#0f0508;"></div>
+                      <div class="tsw-surface" style="background:#220d18;border-color:rgba(251,113,133,0.18);"></div>
+                      <div class="tsw-accent" style="background:#e11d48;"></div>
+                    </div>
+                    <span class="theme-swatch-name">Rose</span>
+                    <i class="fi fi-sr-check theme-swatch-check"></i>
+                  </button>
+                  <button class="theme-swatch" data-theme="slate" title="Slate">
+                    <div class="theme-swatch-preview">
+                      <div class="tsw-bg" style="background:#080c10;"></div>
+                      <div class="tsw-surface" style="background:#171c23;border-color:rgba(148,163,184,0.17);"></div>
+                      <div class="tsw-accent" style="background:#475569;"></div>
+                    </div>
+                    <span class="theme-swatch-name">Slate</span>
+                    <i class="fi fi-sr-check theme-swatch-check"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="theme-section" style="margin-top:28px;">
+                <div class="theme-section-label">Chat Background</div>
+                <div class="chatbg-swatches" id="chatbg-swatches">
+                  <button class="chatbg-swatch" data-chatbg="none" title="None">
+                    <div class="chatbg-preview chatbg-preview--none"></div>
+                    <span class="chatbg-name">None</span>
+                    <i class="fi fi-sr-check chatbg-check"></i>
+                  </button>
+                  <button class="chatbg-swatch" data-chatbg="dots" title="Dots">
+                    <div class="chatbg-preview chatbg-preview--dots"></div>
+                    <span class="chatbg-name">Dots</span>
+                    <i class="fi fi-sr-check chatbg-check"></i>
+                  </button>
+                  <button class="chatbg-swatch" data-chatbg="grid" title="Grid">
+                    <div class="chatbg-preview chatbg-preview--grid"></div>
+                    <span class="chatbg-name">Grid</span>
+                    <i class="fi fi-sr-check chatbg-check"></i>
+                  </button>
+                  <button class="chatbg-swatch" data-chatbg="waves" title="Waves">
+                    <div class="chatbg-preview chatbg-preview--waves"></div>
+                    <span class="chatbg-name">Waves</span>
+                    <i class="fi fi-sr-check chatbg-check"></i>
+                  </button>
+                  <button class="chatbg-swatch" data-chatbg="bubbles" title="Bubbles">
+                    <div class="chatbg-preview chatbg-preview--bubbles"></div>
+                    <span class="chatbg-name">Bubbles</span>
+                    <i class="fi fi-sr-check chatbg-check"></i>
+                  </button>
+                </div>
+              </div>
+              <!-- Real-time mini chat preview -->
+              <div class="theme-preview-wrap">
+                <div class="theme-preview-header">
+                  <i class="fi fi-rr-eye" style="font-size:10px;margin-right:5px;"></i> Live Preview
+                </div>
+                <div class="theme-preview-body" id="themePreviewBody">
+                  <div class="theme-preview-msg theme-preview-msg--in">
+                    <div class="theme-preview-avatar" style="background:#7c3aed;">A</div>
+                    <div class="theme-preview-bubble theme-preview-bubble--in">Hey! Love the new look 🔥</div>
+                  </div>
+                  <div class="theme-preview-msg theme-preview-msg--out">
+                    <div class="theme-preview-bubble theme-preview-bubble--out">Thanks! 😊 Just picked this theme</div>
+                  </div>
+                  <div class="theme-preview-msg theme-preview-msg--in">
+                    <div class="theme-preview-avatar" style="background:#7c3aed;">A</div>
+                    <div class="theme-preview-bubble theme-preview-bubble--in">Looks great with these colors</div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="settings-submit-btn" id="save-theme-btn" style="margin-top:24px;width:100%;">
+                <i class="fi fi-sr-palette"></i> Save Appearance
+              </button>
+            </div>
+
+            <!-- ============ STATISTICS CARD ============ -->
+            <div class="settings-card full-width" data-section="account">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-chart-histogram"></i> Personal Message Statistics
+              </div>
+              <div class="stats-grid" id="stats-grid">
+                <div class="stats-loading"><i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Loading statistics...</div>
+              </div>
+            </div>
+
+            <!-- ============ INVITATIONS & GROUPS CARD ============ -->
+            <div class="settings-card full-width" data-section="account">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-user-add"></i> Invitations & Groups
+              </div>
+              <div th:if="${infoMessage}" class="settings-alert" style="background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.3); color:#93c5fd;">
+                <i class="fi fi-sr-info"></i>
+                <span th:text="${infoMessage}"></span>
+              </div>
+              <div class="settings-form-grid">
+                <div class="settings-field">
+                  <label class="settings-label">Your Personal Link</label>
+                  <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:8px;">Share this link to add contacts instantly.</p>
+                  <button id="generateInviteBtn" class="settings-submit-btn" style="margin-top:0; width:auto; padding:8px 16px;">
+                    <i class="fi fi-br-link"></i> Generate & Copy
+                  </button>
+                  <div id="inviteLinkContainer" style="display:none; margin-top:8px;">
+                    <input type="text" id="inviteLinkInput" class="settings-input" readonly/>
+                  </div>
+                </div>
+                <div class="settings-field">
+                  <label class="settings-label">Add Contact via Token</label>
+                  <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:8px;">Paste a friend's token or invite link.</p>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" id="inviteTokenInput" class="settings-input" placeholder="Paste token here..."/>
+                    <button id="acceptInviteBtn" class="settings-submit-btn" style="margin-top:0; width:auto; padding:8px 16px; background:linear-gradient(135deg, #16a34a, #15803d);">
+                      <i class="fi fi-br-user-add"></i> Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <hr style="border:none; border-top:1px solid var(--clr-border); margin:24px 0;"/>
+              <div class="settings-card-title" style="margin-bottom:12px;">
+                <i class="fi fi-sr-users"></i> Your Admin Groups
+              </div>
+              <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:16px;">Generate persistent invite links for groups you manage.</p>
+              <div id="admin-groups-list" style="display:flex; flex-direction:column; gap:12px;">
+                <div style="text-align:center; padding:10px;"><i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Loading groups...</div>
+              </div>
+            </div>
+
+            <!-- ============ PRIVACY CARD ============ -->
+            <div class="settings-card full-width" data-section="privacy">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-shield"></i> Privacy
+              </div>
+              <div class="settings-form-grid">
+                <div class="settings-field settings-form-full">
+                  <label class="settings-label">Who can message you</label>
+                  <div class="privacy-radio-group">
+                    <label class="privacy-radio">
+                      <input type="radio" name="contactPrivacy" value="everyone" checked/>
+                      <span class="privacy-radio-check"></span>
+                      <span>Everyone</span>
+                    </label>
+                    <label class="privacy-radio">
+                      <input type="radio" name="contactPrivacy" value="invitation"/>
+                      <span class="privacy-radio-check"></span>
+                      <span>Invitation only</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="settings-field">
+                  <label class="settings-label">Online Status</label>
+                  <label class="privacy-toggle">
+                    <input type="checkbox" id="privacy-online-status" checked/>
+                    <span class="privacy-toggle-slider"></span>
+                    <span class="privacy-toggle-label">Show when I'm online</span>
+                  </label>
+                </div>
+                <div class="settings-field">
+                  <label class="settings-label">Read Receipts</label>
+                  <label class="privacy-toggle">
+                    <input type="checkbox" id="privacy-read-receipts" checked/>
+                    <span class="privacy-toggle-slider"></span>
+                    <span class="privacy-toggle-label">Send read receipts</span>
+                  </label>
+                </div>
+              </div>
+              <button class="settings-submit-btn" id="save-privacy-btn">
+                <i class="fi fi-sr-disk"></i> Save Privacy Settings
+              </button>
+            </div>
+
+            <!-- ============ BLOCKED USERS CARD ============ -->
+            <div class="settings-card full-width" data-section="privacy">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-user-block"></i> Blocked Users
+              </div>
+              <div id="blocked-users-list" style="display:flex; flex-direction:column; gap:8px;">
+                <div style="text-align:center; padding:16px; color:var(--clr-text-muted); font-size:13px;">
+                  <i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Loading...
+                </div>
+              </div>
+            </div>
+
+            <!-- ============ DANGER ZONE CARD ============ -->
+            <div class="settings-card full-width settings-danger-zone" data-section="account">
+              <div class="settings-card-title">
+                <i class="fi fi-sr-exclamation-triangle"></i> Danger Zone
+              </div>
+              <div class="settings-form-grid">
+                <div class="settings-field settings-form-full">
+                  <label class="settings-label">Export Data</label>
+                  <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:8px;">Download all your messages and account data as JSON.</p>
+                  <button class="settings-submit-btn" id="export-data-btn" style="margin-top:0; width:auto; padding:8px 16px; background:rgba(37,99,235,0.15); color:#93c5fd;">
+                    <i class="fi fi-sr-download"></i> Export Data
+                  </button>
+                </div>
+                <div class="settings-field settings-form-full">
+                  <label class="settings-label">Clear All Conversations</label>
+                  <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:8px;">Permanently delete all your messages. This cannot be undone.</p>
+                  <button class="settings-submit-btn" id="clear-conversations-btn" style="margin-top:0; width:auto; padding:8px 16px; background:rgba(239,68,68,0.15); color:#fca5a5;">
+                    <i class="fi fi-sr-trash"></i> Clear All Messages
+                  </button>
+                </div>
+                <div class="settings-field settings-form-full">
+                  <label class="settings-label">Delete Account</label>
+                  <p style="font-size:12px; color:var(--clr-text-muted); margin-bottom:8px;">Permanently delete your account and all associated data.</p>
+                  <button class="settings-submit-btn" id="delete-account-btn" style="margin-top:0; width:auto; padding:8px 16px; background:rgba(220,38,38,0.2); color:#fca5a5;">
+                    <i class="fi fi-sr-user-remove"></i> Delete Account
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- .settings-grid -->
+
+        </div><!-- .settings-content -->
+      </div><!-- .settings-body -->
+    </div><!-- .settings-layout -->
+  </div><!-- .settings-wrap -->
+
+  <!-- ============================================================
+       MFA SETUP MODAL
+       ============================================================ -->
+  <div class="mfa-modal-overlay" id="mfa-setup-overlay">
+    <div class="mfa-modal" role="dialog" aria-modal="true" aria-labelledby="mfa-setup-title">
+      <button class="mfa-modal-close" id="mfa-setup-close" aria-label="Close">
+        <i class="fi fi-rr-cross-small"></i>
+      </button>
+
+      <div class="mfa-modal-title" id="mfa-setup-title">Set Up Two-Factor Auth</div>
+      <div class="mfa-modal-subtitle">Protect your account with a time-based one-time password (TOTP)</div>
+
+      <!-- Step indicator -->
+      <div class="mfa-steps">
+        <div class="mfa-step active" id="mfa-step-1">
+          <div class="mfa-step-dot">1</div>
+          <div class="mfa-step-label">Scan</div>
+        </div>
+        <div class="mfa-step-line" id="mfa-line-1"></div>
+        <div class="mfa-step" id="mfa-step-2">
+          <div class="mfa-step-dot">2</div>
+          <div class="mfa-step-label">Verify</div>
+        </div>
+        <div class="mfa-step-line" id="mfa-line-2"></div>
+        <div class="mfa-step" id="mfa-step-3">
+          <div class="mfa-step-dot">3</div>
+          <div class="mfa-step-label">Done</div>
+        </div>
+      </div>
+
+      <!-- Step 1: QR code -->
+      <div class="mfa-step-panel active" id="mfa-panel-1">
+        <div class="mfa-qr-wrap">
+          <div class="mfa-qr-loading" id="mfa-qr-loading">
+            <i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i>
+          </div>
+          <img class="mfa-qr-img" id="mfa-qr-img" src="" alt="QR Code" style="display:none;"/>
+        </div>
+        <p style="font-family:var(--font-body);font-size:12px;color:var(--clr-text-muted);text-align:center;margin-bottom:12px;">
+          Scan with Google Authenticator, Authy, or any TOTP app.
+          Can't scan? Enter the key manually:
+        </p>
+        <div class="mfa-secret-box">
+          <span class="mfa-secret-text" id="mfa-secret-display">—</span>
+          <button class="mfa-copy-btn" id="mfa-copy-btn" title="Copy secret key">
+            <i class="fi fi-rr-copy"></i>
+          </button>
+        </div>
+        <button class="mfa-modal-btn" id="mfa-next-btn" style="margin-top:20px;">
+          <i class="fi fi-rr-arrow-right"></i> Next
+        </button>
+      </div>
+
+      <!-- Step 2: Verify code -->
+      <div class="mfa-step-panel" id="mfa-panel-2">
+        <p style="font-family:var(--font-body);font-size:13px;color:var(--clr-text-muted);text-align:center;margin-bottom:16px;">
+          Enter the 6-digit code from your authenticator app to confirm setup.
+        </p>
+
+        <!-- Countdown ring -->
+        <div class="mfa-modal-timer-wrap">
+          <svg class="mfa-modal-timer-svg" viewBox="0 0 44 44">
+            <circle class="mfa-modal-timer-track" cx="22" cy="22" r="18"/>
+            <circle class="mfa-modal-timer-ring" id="mfa-modal-ring" cx="22" cy="22" r="18"/>
+          </svg>
+          <span class="mfa-modal-timer-label" id="mfa-modal-timer-label">30</span>
+        </div>
+
+        <div class="mfa-modal-alert" id="mfa-confirm-alert"></div>
+
+        <div class="mfa-modal-otp-row" id="mfa-modal-otp-row">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                 class="mfa-modal-otp-digit" id="md0" autocomplete="one-time-code"/>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                 class="mfa-modal-otp-digit" id="md1" autocomplete="one-time-code"/>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                 class="mfa-modal-otp-digit" id="md2" autocomplete="one-time-code"/>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                 class="mfa-modal-otp-digit" id="md3" autocomplete="one-time-code"/>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                 class="mfa-modal-otp-digit" id="md4" autocomplete="one-time-code"/>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                 class="mfa-modal-otp-digit" id="md5" autocomplete="one-time-code"/>
+        </div>
+
+        <button class="mfa-modal-btn" id="mfa-confirm-btn">
+          <i class="fi fi-sr-shield-check"></i> Confirm &amp; Enable
+        </button>
+        <button class="mfa-modal-btn" id="mfa-back-btn"
+                style="margin-top:10px;background:rgba(255,255,255,0.05);color:var(--clr-text-secondary);box-shadow:none;">
+          <i class="fi fi-rr-arrow-left"></i> Back
+        </button>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div class="mfa-step-panel" id="mfa-panel-3">
+        <div style="text-align:center;padding:10px 0;">
+          <div class="mfa-success-icon">
+            <i class="fi fi-sr-check"></i>
+          </div>
+          <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:var(--clr-text-primary);margin-bottom:8px;">
+            MFA Enabled!
+          </div>
+          <p style="font-family:var(--font-body);font-size:13px;color:var(--clr-text-muted);line-height:1.55;margin-bottom:24px;">
+            Two-factor authentication is now active on your account.
+            You'll need your authenticator app every time you log in.
+          </p>
+          <button class="mfa-modal-btn" id="mfa-done-btn">
+            <i class="fi fi-sr-check-circle"></i> Done
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MFA DISABLE MODAL
+       ============================================================ -->
+  <div class="mfa-modal-overlay" id="mfa-disable-overlay">
+    <div class="mfa-modal" role="dialog" aria-modal="true" aria-labelledby="mfa-disable-title">
+      <button class="mfa-modal-close" id="mfa-disable-close" aria-label="Close">
+        <i class="fi fi-rr-cross-small"></i>
+      </button>
+
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="width:56px;height:56px;border-radius:9999px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fca5a5;margin:0 auto 14px;">
+          <i class="fi fi-sr-shield-exclamation"></i>
+        </div>
+        <div class="mfa-modal-title" id="mfa-disable-title">Disable Two-Factor Auth</div>
+        <div class="mfa-modal-subtitle">
+          This will remove the extra layer of security from your account.
+          Enter your password to confirm.
+        </div>
+      </div>
+
+      <div class="mfa-modal-alert" id="mfa-disable-alert"></div>
+
+      <div class="mfa-disable-field">
+        <label class="mfa-disable-label" for="mfa-disable-password">Current Password</label>
+        <input type="password" id="mfa-disable-password" class="mfa-disable-input"
+               placeholder="Enter your password" autocomplete="current-password"
+               style="font-size:max(16px,13px);"/>
+      </div>
+
+      <button class="mfa-modal-btn danger" id="mfa-disable-confirm-btn">
+        <i class="fi fi-sr-shield-slash"></i> Disable MFA
+      </button>
+      <button class="mfa-modal-btn" id="mfa-disable-cancel-btn"
+              style="margin-top:10px;background:rgba(255,255,255,0.05);color:var(--clr-text-secondary);box-shadow:none;">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Password visibility toggle (plain JS, no jQuery dependency)
+    function togglePw(inputId, btn) {
+      var input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('i').className = 'fi fi-rr-eye-crossed';
+      } else {
+        input.type = 'password';
+        btn.querySelector('i').className = 'fi fi-rr-eye';
+      }
+    }
+
+    // Photo preview
+    document.getElementById('settings-photo-input').addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var preview = document.getElementById('settings-avatar-preview');
+          preview.innerHTML = '<img src="' + e.target.result + '" alt="Profile"/>';
+        };
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  </script>
+
+  <!-- ============================================================
+       DANGER CONFIRM MODAL (used for delete account / clear conversations)
+       ============================================================ -->
+  <div class="revoke-modal-overlay" id="danger-confirm-overlay" role="dialog" aria-modal="true">
+    <div class="revoke-modal">
+      <div class="revoke-modal-icon" id="danger-confirm-icon">
+        <i class="fi fi-sr-exclamation-triangle"></i>
+      </div>
+      <h3 class="revoke-modal-title" id="danger-confirm-title">Are you sure?</h3>
+      <p class="revoke-modal-desc" id="danger-confirm-desc">This action cannot be undone. Enter your password to confirm.</p>
+      <div style="width:100%;margin-bottom:16px;">
+        <input type="password" id="danger-confirm-password" class="settings-input"
+               placeholder="Enter your password" autocomplete="off"
+               style="font-size:max(16px,13px);width:100%;box-sizing:border-box;"/>
+      </div>
+      <div class="revoke-modal-actions">
+        <button class="revoke-btn-cancel" id="danger-confirm-cancel-btn" type="button">Cancel</button>
+        <button class="revoke-btn-confirm" id="danger-confirm-execute-btn" type="button">
+          <i class="fi fi-sr-trash"></i> Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       REVOKE SESSION MODAL
+       ============================================================ -->
+  <div class="revoke-modal-overlay" id="revoke-session-overlay" role="dialog" aria-modal="true" aria-labelledby="revoke-modal-title">
+    <div class="revoke-modal">
+
+      <!-- Icon -->
+      <div class="revoke-modal-icon">
+        <i class="fi fi-sr-sign-out-alt"></i>
+      </div>
+
+      <!-- Text -->
+      <h3 class="revoke-modal-title" id="revoke-modal-title">Log Out Device?</h3>
+      <p class="revoke-modal-desc">
+        This session will be immediately terminated and that device will be signed out.
+      </p>
+
+      <!-- Actions -->
+      <div class="revoke-modal-actions">
+        <button class="revoke-btn-cancel" id="revoke-cancel-btn" type="button">
+          Cancel
+        </button>
+        <button class="revoke-btn-confirm" id="revoke-confirm-btn" type="button">
+          <i class="fi fi-sr-sign-out-alt"></i> Log Out
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

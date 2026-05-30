@@ -1,0 +1,1161 @@
+/* ═══════════════════════════════════════════════════════════
+   ChatRoom — Call Page Styles
+   Inspired by the chat section's design language.
+   Uses the same CSS variables for consistent theming.
+═══════════════════════════════════════════════════════════ */
+
+/* ─── Reset & Root ───────────────────────────────────────── */
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--clr-bg-deep);
+    font-family: var(--font-body);
+    color: var(--clr-text-primary);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ─── Root container ─────────────────────────────────────── */
+.cr-call-root {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* ─── Animated background blobs ─────────────────────────── */
+.cr-call-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: var(--clr-bg-deep);
+    overflow: hidden;
+}
+
+.cr-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    animation: blob-drift 12s ease-in-out infinite alternate;
+}
+
+.cr-blob-a {
+    width: 55vw;
+    height: 55vw;
+    top: -20%;
+    left: -15%;
+    background: var(--clr-primary);
+    animation-duration: 14s;
+}
+
+.cr-blob-b {
+    width: 45vw;
+    height: 45vw;
+    bottom: -15%;
+    right: -10%;
+    background: var(--clr-accent);
+    animation-duration: 10s;
+    animation-direction: alternate-reverse;
+}
+
+@keyframes blob-drift {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+    to {
+        transform: translate(4%, 6%) scale(1.08);
+    }
+}
+
+/* ─── Screens (state machine) ────────────────────────────── */
+.cr-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    animation: screen-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes screen-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCREEN 1 — CONNECTING
+═══════════════════════════════════════════════════════════ */
+
+/* Top brand bar */
+.cr-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px;
+    z-index: 10;
+}
+
+.cr-topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--clr-text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.cr-topbar-brand i {
+    font-size: 18px;
+    color: var(--clr-primary);
+}
+
+.cr-call-type-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--clr-border-md);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--clr-text-secondary);
+    backdrop-filter: blur(8px);
+}
+
+.cr-call-type-pill i {
+    color: var(--clr-primary);
+    font-size: 13px;
+}
+
+/* Avatar stage */
+.cr-avatar-stage {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+}
+
+/* Pulsing rings */
+.cr-pulse-rings {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cr-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid var(--clr-primary);
+    animation: ring-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    pointer-events: none;
+}
+
+.cr-ring-1 {
+    width: 154px;
+    height: 154px;
+    animation-delay: 0s;
+    border-color: var(--clr-primary);
+}
+.cr-ring-2 {
+    width: 186px;
+    height: 186px;
+    animation-delay: 0.6s;
+    border-color: rgba(37, 99, 235, 0.6);
+}
+.cr-ring-3 {
+    width: 218px;
+    height: 218px;
+    animation-delay: 1.2s;
+    border-color: rgba(37, 99, 235, 0.3);
+}
+
+@keyframes ring-pulse {
+    0% {
+        opacity: 0.7;
+        transform: scale(0.88);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.06);
+    }
+}
+
+/* Main avatar */
+.cr-main-avatar {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--clr-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 38px;
+    font-weight: 700;
+    color: #fff;
+    box-shadow:
+        0 0 0 4px rgba(37, 99, 235, 0.2),
+        var(--shadow-card);
+    overflow: hidden;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.cr-main-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Peer name */
+.cr-peer-name {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--clr-text-primary);
+    letter-spacing: 0.01em;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Status row */
+.cr-call-status-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--clr-text-secondary);
+    margin-bottom: 56px;
+}
+
+.cr-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--clr-primary);
+    animation: dot-blink 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes dot-blink {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(0.7);
+    }
+}
+
+/* Cancel / footer */
+.cr-connecting-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ─── Shared button styles ───────────────────────────────── */
+.cr-btn-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--clr-text-secondary);
+    text-align: center;
+    letter-spacing: 0.02em;
+}
+
+/* Round control buttons */
+.cr-btn-round {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    backdrop-filter: blur(12px);
+    position: relative;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cr-btn-round:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: scale(1.06);
+}
+
+.cr-btn-round:active {
+    transform: scale(0.95);
+}
+
+/* End call button (red) */
+.cr-btn-end {
+    background: var(--clr-danger) !important;
+    border-color: rgba(220, 38, 38, 0.5) !important;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.45);
+}
+
+.cr-btn-end:hover {
+    background: #b91c1c !important;
+    box-shadow: 0 4px 28px rgba(220, 38, 38, 0.65);
+}
+
+/* Larger end button in active call */
+.cr-btn-end-lg {
+    width: 66px;
+    height: 66px;
+    font-size: 22px;
+}
+
+/* Muted/off state */
+.cr-btn-active-off {
+    background: rgba(220, 38, 38, 0.7) !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCREEN 2 — ACTIVE CALL
+═══════════════════════════════════════════════════════════ */
+.cr-screen--active {
+    background: #000;
+    z-index: 2;
+}
+
+/* Remote video (full-screen) */
+.cr-video-remote {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    background: #000;
+}
+
+/* Audio call background (no video) */
+.cr-audio-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--clr-bg-deep);
+}
+
+.cr-audio-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--clr-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 48px;
+    font-weight: 700;
+    color: #fff;
+    box-shadow:
+        0 0 60px rgba(37, 99, 235, 0.35),
+        var(--shadow-card);
+}
+
+/* Top status bar (transparent overlay) */
+.cr-active-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 20px 24px 40px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.65) 0%,
+        transparent 100%
+    );
+}
+
+.cr-active-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cr-active-name {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.cr-active-sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cr-timer-pill {
+    padding: 5px 14px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-heading);
+    color: #fff;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(6px);
+}
+
+/* Local video PiP */
+.cr-local-pip {
+    position: absolute;
+    bottom: 120px;
+    right: 20px;
+    width: 180px;
+    height: 135px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.cr-local-pip:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.03);
+}
+
+.cr-video-local {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* When the local camera is the MAIN (fullscreen) view, avoid cropping the user's
+   frame too aggressively. */
+.cr-screen--active.cr-layout-local-full .cr-video-local {
+    object-fit: contain;
+    background: #000;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Video layout: default = local fullscreen (user), remote = PiP
+   Toggle by adding/removing .cr-layout-local-full on #screen-active
+   ───────────────────────────────────────────────────────── */
+.cr-screen--active.cr-layout-local-full .cr-local-pip {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    bottom: 0;
+    right: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    z-index: 0;
+}
+
+.cr-screen--active.cr-layout-local-full .cr-local-pip:hover {
+    transform: none;
+    border-color: transparent;
+}
+
+.cr-screen--active.cr-layout-local-full .cr-video-remote {
+    inset: auto;
+    bottom: 120px;
+    right: 20px;
+    width: 180px;
+    height: 135px;
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+    cursor: pointer;
+}
+
+.cr-screen--active.cr-layout-local-full .cr-video-remote:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.03);
+    transition: var(--transition-fast);
+}
+
+.cr-pip-off-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--clr-bg-raised);
+    color: var(--clr-text-muted);
+    font-size: 22px;
+    z-index: 2;
+}
+
+.cr-pip-label {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Controls bar */
+.cr-controls-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px 40px 36px;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.75) 0%,
+        transparent 100%
+    );
+}
+
+.cr-ctrl-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.cr-btn-ctrl {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCREEN 3 — CALL ENDED
+═══════════════════════════════════════════════════════════ */
+.cr-screen--ended {
+    z-index: 20;
+    background: var(--clr-bg-deep);
+}
+
+.cr-ended-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 48px 40px;
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--clr-border-md);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    max-width: 340px;
+    width: 90%;
+    animation: card-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes card-in {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.cr-ended-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--clr-danger-dim);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--clr-danger);
+    margin-bottom: 4px;
+}
+
+.cr-ended-peer {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--clr-text-primary);
+}
+
+.cr-ended-title {
+    font-size: 14px;
+    color: var(--clr-text-secondary);
+    font-weight: 500;
+}
+
+.cr-ended-duration {
+    font-size: 13px;
+    color: var(--clr-text-muted);
+    min-height: 18px;
+}
+
+.cr-ended-return-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    margin-top: 8px;
+    background: var(--clr-primary);
+    color: #fff;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-decoration: none;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-btn);
+    border: none;
+    cursor: pointer;
+}
+
+.cr-ended-return-btn:hover {
+    background: var(--clr-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px var(--clr-primary-glow);
+    color: #fff;
+    text-decoration: none;
+}
+
+.cr-ended-return-btn:active {
+    transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT PAGE — Incoming Call Notification Modal
+   (Used in chat.html, styles kept here for modularity)
+═══════════════════════════════════════════════════════════ */
+
+.call-notification-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10100;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 32px;
+    pointer-events: none;
+}
+
+.call-notification-box {
+    pointer-events: all;
+    width: min(400px, 94vw);
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--clr-border-md);
+    border-radius: var(--radius-xl);
+    box-shadow:
+        var(--shadow-card),
+        0 0 0 1px rgba(37, 99, 235, 0.12);
+    overflow: hidden;
+    animation: notif-slide-up 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+@keyframes notif-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.call-notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--clr-border);
+}
+
+.call-type-indicator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--clr-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.call-type-indicator i {
+    font-size: 14px;
+}
+
+.call-notification-close-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.call-notification-close-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--clr-text-primary);
+}
+
+.call-notification-body {
+    padding: 18px 18px 20px;
+}
+
+.call-avatar-container {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.call-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--clr-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.caller-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.caller-name {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--clr-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.caller-status {
+    font-size: 13px;
+    color: var(--clr-text-secondary);
+    margin-top: 2px;
+}
+
+.call-notification-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.call-action-btn {
+    flex: 1;
+    padding: 11px 0;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition-fast);
+}
+
+.call-action-btn i {
+    font-size: 15px;
+}
+
+.call-decline-btn {
+    background: var(--clr-danger-dim);
+    color: var(--clr-danger);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.call-decline-btn:hover {
+    background: rgba(220, 38, 38, 0.28);
+}
+
+.call-accept-btn {
+    background: var(--clr-success-dim);
+    color: var(--clr-success);
+    border: 1px solid rgba(22, 163, 74, 0.25);
+}
+
+.call-accept-btn:hover {
+    background: rgba(22, 163, 74, 0.28);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+    /* On phones, avoid cropping remote video (letterbox instead). */
+    .cr-video-remote {
+        object-fit: contain;
+        background: #000;
+    }
+
+    .cr-peer-name {
+        font-size: 20px;
+    }
+    .cr-main-avatar {
+        width: 88px;
+        height: 88px;
+        font-size: 32px;
+    }
+    .cr-ring-1 {
+        width: 134px;
+        height: 134px;
+    }
+    .cr-ring-2 {
+        width: 162px;
+        height: 162px;
+    }
+    .cr-ring-3 {
+        width: 190px;
+        height: 190px;
+    }
+
+    .cr-local-pip {
+        width: 110px;
+        height: 156px;
+        bottom: 110px;
+        right: 12px;
+    }
+
+    .cr-screen--active.cr-layout-local-full .cr-video-remote {
+        width: 110px;
+        height: 156px;
+        bottom: 110px;
+        right: 12px;
+    }
+
+    .cr-controls-bar {
+        gap: 20px;
+        padding: 20px 20px 30px;
+    }
+
+    .cr-btn-round {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+    }
+    .cr-btn-end-lg {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+    }
+
+    .cr-ended-card {
+        padding: 36px 28px;
+        gap: 12px;
+    }
+
+    .call-notification-box {
+        border-radius: var(--radius-lg);
+    }
+}
+
+/* ─── Legacy overlay (chat page injected by webrtc-call.js) ── */
+/* These are retained so existing chat-page overlay still works  */
+.call-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px);
+    animation: screen-in 0.3s ease both;
+}
+
+.call-overlay.hidden {
+    display: none !important;
+}
+
+.call-container {
+    width: 90%;
+    max-width: 1100px;
+    height: 88%;
+    max-height: 780px;
+    background: var(--clr-bg-surface);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--clr-border-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-card);
+}
+
+.call-header {
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--clr-border);
+    background: var(--clr-bg-raised);
+    font-size: 14px;
+    color: var(--clr-text-secondary);
+}
+
+.video-container {
+    flex: 1;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+}
+
+.video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.call-overlay #local-video {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 160px;
+    height: 120px;
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    z-index: 5;
+}
+
+.call-info {
+    padding: 14px 20px;
+    text-align: center;
+    border-top: 1px solid var(--clr-border);
+    background: var(--clr-bg-raised);
+}
+
+#remote-peer-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--clr-text-primary);
+}
+
+#call-state-text {
+    font-size: 13px;
+    color: var(--clr-text-secondary);
+    margin-top: 2px;
+}
+
+.call-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--clr-bg-raised);
+    border-top: 1px solid var(--clr-border);
+}
+
+.call-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.call-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+.call-btn.hang-up {
+    background: var(--clr-danger);
+    border-color: rgba(220, 38, 38, 0.5);
+}
+.call-btn.hang-up:hover {
+    background: #b91c1c;
+}
+
+.call-btn.accept {
+    background: var(--clr-success-dim);
+    color: var(--clr-success);
+    border-color: rgba(22, 163, 74, 0.3);
+    gap: 6px;
+    padding: 0 18px;
+    border-radius: var(--radius-full);
+    width: auto;
+}
+.call-btn.reject {
+    background: var(--clr-danger-dim);
+    color: var(--clr-danger);
+    border-color: rgba(220, 38, 38, 0.3);
+    gap: 6px;
+    padding: 0 18px;
+    border-radius: var(--radius-full);
+    width: auto;
+}
+
+.incoming-call-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 12px;
+}
+.incoming-call-controls.hidden {
+    display: none;
+}
+
+.call-ended-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--clr-bg-deep);
+}
+.call-ended-screen.hidden {
+    display: none;
+}
+
+.call-ended-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 48px 40px;
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--clr-border-md);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+}
+
+.call-ended-icon {
+    font-size: 40px;
+    color: var(--clr-danger);
+}
+
+.call-ended-content h2 {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--clr-text-primary);
+}
+
+.call-ended-content p {
+    color: var(--clr-text-secondary);
+    font-size: 14px;
+}
+
+.call-ended-duration {
+    color: var(--clr-text-muted);
+    font-size: 13px;
+}
+
+.call-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--clr-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.call-btn-primary:hover {
+    background: var(--clr-primary-hover);
+}
+
+.connection-status {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    backdrop-filter: blur(6px);
+    z-index: 5;
+}

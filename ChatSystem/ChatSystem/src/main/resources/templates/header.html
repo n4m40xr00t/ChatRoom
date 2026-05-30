@@ -1,0 +1,143 @@
+<!-- ============================================================
+     HEADER FRAGMENT
+     ============================================================ -->
+<header class="cr-header" id="cr-header" th:fragment="headerFragment" xmlns:th="http://www.thymeleaf.org">
+
+  <!-- Hamburger (mobile) -->
+  <button class="cr-hamburger" id="cr-hamburger" onclick="toggleMobileNav()" type="button" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <a href="/" class="cr-logo">
+    <div class="cr-logo-icon">
+      <i class="fi fi-sr-comment-alt"></i>
+    </div>
+    <span class="cr-logo-text">ChatRoom</span>
+  </a>
+
+  <div class="cr-nav-spacer"></div>
+
+  <!-- Navigation links -->
+  <nav class="cr-nav logged-in-nav" th:if="${session.username != null}">
+    <a href="/chat" class="cr-nav-link" id="nav-chat">
+      <i class="fi fi-sr-comment-dots"></i> Chat
+    </a>
+  </nav>
+
+  <div class="cr-header-divider" th:if="${session.username != null}"></div>
+
+  <!-- User menu (logged in) -->
+  <div class="cr-user-menu" id="cr-user-menu" th:if="${session.username != null}">
+    <button class="cr-user-btn" onclick="toggleUserMenu()" type="button">
+      <!-- Avatar: profile pic or initial -->
+      <div class="cr-user-avatar" id="hdr-avatar"
+           th:style="${session.username != null} ? 'background: linear-gradient(135deg,#2563eb,#7c3aed)' : ''">
+        <span th:text="${session.username != null ? #strings.toUpperCase(#strings.substring(session.username,0,1)) : '?'}"></span>
+      </div>
+      <span class="cr-user-name" th:text="${session.username}">User</span>
+      <i class="fi fi-sr-angle-down cr-user-chevron"></i>
+    </button>
+
+    <div class="cr-user-dropdown" id="cr-user-dropdown">
+      <a href="/settings" class="cr-dropdown-item">
+        <i class="fi fi-sr-settings"></i> Settings
+      </a>
+      <button class="cr-dropdown-item" type="button" onclick="copyMyToken(event)">
+        <i class="fi fi-br-copy"></i> Copy My Token
+        <span id="tokenCopiedHint" style="font-size:10px; color:var(--clr-success); margin-left:auto; display:none; font-weight:600;">Copied!</span>
+      </button>
+      <div class="cr-dropdown-divider"></div>
+      <a th:href="@{/logout}" class="cr-dropdown-item danger">
+        <i class="fi fi-sr-sign-out-alt"></i> Log Out
+      </a>
+    </div>
+  </div>
+
+  <!-- Auth links (not logged in) -->
+  <nav class="cr-nav auth-nav" th:if="${session.username == null}">
+    <a th:href="@{/login}" class="cr-nav-link">
+      <i class="fi fi-sr-sign-in-alt"></i> Log In
+    </a>
+    <a th:href="@{/users/create-account}" class="cr-nav-link"
+       style="background:var(--clr-primary);color:#fff;padding:7px 16px;border-radius:var(--radius-full);">
+      <i class="fi fi-sr-user-add"></i> Sign Up
+    </a>
+  </nav>
+
+  <!-- Mobile navigation drawer -->
+  <nav class="cr-mobile-nav" id="cr-mobile-nav" th:if="${session.username != null}">
+    <a href="/chat" class="cr-mobile-nav-link" onclick="closeMobileNav()">
+      <i class="fi fi-sr-comment-dots"></i> Chat
+    </a>
+    <a href="/settings" class="cr-mobile-nav-link" onclick="closeMobileNav()">
+      <i class="fi fi-sr-settings"></i> Settings
+    </a>
+    <a href="/logout" class="cr-mobile-nav-link" style="color:#fca5a5;" onclick="closeMobileNav()">
+      <i class="fi fi-sr-sign-out-alt"></i> Log Out
+    </a>
+  </nav>
+
+</header>
+
+<script>
+  // Mobile nav toggle
+  function toggleMobileNav() {
+    document.getElementById('cr-mobile-nav').classList.toggle('open');
+    document.getElementById('cr-hamburger').classList.toggle('open');
+    document.body.classList.toggle('cr-nav-open');
+  }
+  function closeMobileNav() {
+    document.getElementById('cr-mobile-nav').classList.remove('open');
+    document.getElementById('cr-hamburger').classList.remove('open');
+    document.body.classList.remove('cr-nav-open');
+  }
+
+  // Toggle user dropdown
+  function toggleUserMenu() {
+    document.getElementById('cr-user-menu').classList.toggle('open');
+  }
+  // Close on outside click
+  document.addEventListener('click', function(e) {
+    var menu = document.getElementById('cr-user-menu');
+    if (menu && !menu.contains(e.target)) {
+      menu.classList.remove('open');
+    }
+    var nav = document.getElementById('cr-mobile-nav');
+    var ham = document.getElementById('cr-hamburger');
+    if (nav && nav.classList.contains('open') && !nav.contains(e.target) && !ham.contains(e.target)) {
+      closeMobileNav();
+    }
+  });
+  // Highlight active nav link
+  document.addEventListener('DOMContentLoaded', function() {
+    var path = window.location.pathname;
+    var links = document.querySelectorAll('.cr-nav-link');
+    links.forEach(function(l) {
+      var href = l.getAttribute('href');
+      if (href && path.startsWith(href) && href !== '/') {
+        l.classList.add('active');
+      }
+    });
+  });
+
+  // Copy token handler
+  function copyMyToken(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    fetch('/api/invite/generate', {method: 'POST'})
+      .then(res => res.json())
+      .then(data => {
+        var el = document.createElement('textarea');
+        el.value = data.token;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        
+        var hint = document.getElementById('tokenCopiedHint');
+        hint.style.display = 'inline';
+        setTimeout(function() { hint.style.display = 'none'; }, 2000);
+      })
+      .catch(err => console.error('Failed to copy token', err));
+  }
+</script>

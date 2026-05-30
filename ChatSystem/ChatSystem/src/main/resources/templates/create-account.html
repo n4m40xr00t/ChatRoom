@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up — ChatRoom</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-bold-rounded/css/uicons-bold-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/variables.css"/>
+  <link rel="stylesheet" href="/css/reset.css"/>
+  <link rel="stylesheet" href="/css/loading.css"/>
+  <link rel="stylesheet" href="/css/header.css"/>
+  <link rel="stylesheet" href="/css/home.css"/>
+  <link rel="stylesheet" href="/css/themes.css"/>
+
+  <!-- Theme (no defer — must run before render to avoid flash) -->
+  <script src="/js/theme.js"></script>
+
+  <!-- Scripts -->
+  <script defer src="/js/jquery.js"></script>
+  <script defer src="/js/loading.js"></script>
+</head>
+
+<body>
+  <!-- Background image now handled by body in home.css -->
+
+  <!-- Loader -->
+  <div class="loader_container" id="loader_cont_id">
+    <div class="lds-roller" id="loader_main_id">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div class="problem" id="problem_id">
+      Do you have any problem? <a href="#">Contact us</a> now.
+    </div>
+    <div class="by_who" id="by_who_id">by Natiq</div>
+  </div>
+
+  <!-- Header -->
+  <div th:replace="~{header :: headerFragment}"></div>
+
+  <div class="container_login_and_sign_up_main">
+    <div class="container_of_section">
+
+      <!-- Left: marketing text -->
+      <div class="section_1">
+        <div class="text_wlcm big_text">Get started with ChatRoom!</div>
+        <div class="text_wlcm small_text">
+          Join thousands of users on a secure and modern messaging platform
+          built for real-time communication.
+        </div>
+      </div>
+
+      <!-- Right: form card -->
+      <div class="section_2">
+        <form th:action="@{/users/save}" method="POST" enctype="multipart/form-data" class="login_and_signup_cont_inner" id="registerForm">
+
+          <div class="form-heading">Create Account</div>
+
+          <!-- Error -->
+          <div th:if="${param.error}" class="param-error-msg">
+            <p th:text="${param.error}"></p>
+          </div>
+
+          <div class="input_cont_main">
+            <div class="input_cont">
+              <input type="email" name="email" id="email" class="input_main" placeholder="Email" required/>
+            </div>
+            <div class="input_cont">
+              <input type="text" name="name" id="name" class="input_main" placeholder="First Name" required/>
+            </div>
+            <div class="input_cont">
+              <input type="text" name="surname" id="surname" class="input_main" placeholder="Last Name" required/>
+            </div>
+            <div class="input_cont">
+              <input type="text" name="username" id="username" class="input_main" placeholder="Username" required/>
+            </div>
+            <div class="input_cont" style="position:relative;">
+              <input type="password" name="password" id="password" class="input_main" placeholder="Password" style="padding-right:40px;" required/>
+              <button type="button" class="pw-toggle-btn" onclick="togglePw('password', this)"><i class="fi fi-rr-eye"></i></button>
+            </div>
+            <div class="input_cont" style="position:relative;">
+              <input type="password" name="confirmPassword" id="confirmPassword" class="input_main" placeholder="Confirm Password" style="padding-right:40px;" required/>
+              <button type="button" class="pw-toggle-btn" onclick="togglePw('confirmPassword', this)"><i class="fi fi-rr-eye"></i></button>
+            </div>
+            
+            <div class="password-policy" id="pw-policy">
+                Must be at least 8 chars, 1 uppercase, 1 lowercase, 1 digit, and 1 special char.
+            </div>
+            
+            <!-- Bio -->
+            <div class="input_cont">
+              <textarea name="bio" id="bio" class="input_main input_textarea" placeholder="Tell us about yourself (max 280 chars)" maxlength="280" style="resize:vertical;min-height:60px;padding:10px 14px;font-family:var(--font-body);"></textarea>
+            </div>
+            <!-- Photo upload -->
+            <div class="input_cont photo-upload-cont">
+              <label for="profilePhoto" id="photoLabel" class="photo-upload-label">
+                <i class="fi fi-br-camera"></i>
+                <span>Add Photo</span>
+              </label>
+              <input type="file" name="profilePhoto" id="profilePhoto" accept="image/*" style="display:none" onchange="previewPhoto(this)"/>
+              <div class="photo-upload-hint">Optional profile picture</div>
+            </div>
+          </div>
+
+          <div class="buttons_main_cont">
+            <button class="button_main_submit" type="submit"><span>Sign Up</span></button>
+            <div class="other_info_for_login_and_sign_up">
+              <div class="text_wlcm small_text bottom_text">
+                Already a member? <a href="/login">Login</a> now.
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function previewPhoto(input) {
+      if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var lbl = document.getElementById('photoLabel');
+          lbl.style.border = '2px solid rgba(37,99,235,0.6)';
+          lbl.innerHTML = '<img src="' + e.target.result + '" style="width:76px;height:76px;border-radius:50%;object-fit:cover;"/>';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+    
+    function togglePw(inputId, btn) {
+      var input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('i').className = 'fi fi-rr-eye-crossed';
+      } else {
+        input.type = 'password';
+        btn.querySelector('i').className = 'fi fi-rr-eye';
+      }
+    }
+    
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        var pw = document.getElementById('password').value;
+        var cpw = document.getElementById('confirmPassword').value;
+        var pwPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        
+        if (pw !== cpw) {
+            e.preventDefault();
+            alert("Passwords do not match!");
+            return;
+        }
+        
+        if (!pwPattern.test(pw)) {
+            e.preventDefault();
+            var policyText = document.getElementById('pw-policy');
+            policyText.style.color = '#fca5a5';
+            policyText.style.fontWeight = '600';
+            policyText.style.animation = 'shake 0.3s ease-in-out';
+            setTimeout(() => policyText.style.animation = '', 300);
+        }
+    });
+  </script>
+</body>
+</html>

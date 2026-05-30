@@ -1,0 +1,251 @@
+/* ============================================================
+   ChatRoom — Theme Definitions
+   Each theme overrides CSS custom properties from variables.css.
+   Applied via data-theme="..." on <html>.
+   ============================================================ */
+
+/* ---- DEFAULT: Dark ---- */
+[data-theme="dark"] {
+  --clr-bg-deep:       #080a0f;
+  --clr-bg-base:       #0d0f14;
+  --clr-bg-surface:    #13161c;
+  --clr-bg-raised:     #1a1d24;
+  --clr-bg-overlay:    rgba(13,15,20,0.82);
+  --clr-border:        rgba(255,255,255,0.08);
+  --clr-border-md:     rgba(255,255,255,0.13);
+  --clr-border-hover:  rgba(255,255,255,0.22);
+  --clr-primary:       #2563eb;
+  --clr-primary-dim:   rgba(37,99,235,0.18);
+  --clr-primary-hover: #1d4ed8;
+  --clr-primary-glow:  rgba(37,99,235,0.35);
+  --clr-accent:        #7c3aed;
+  --clr-accent-glow:   rgba(124,58,237,0.3);
+  --clr-text-primary:  #e9f8f9;
+  --clr-text-secondary:rgba(233,248,249,0.55);
+  --clr-text-muted:    rgba(233,248,249,0.30);
+  --shadow-card:       0 8px 32px rgba(0,0,0,0.55);
+  --shadow-btn:        0 2px 12px rgba(37,99,235,0.28);
+  --theme-msg-out-bg:  linear-gradient(135deg,#1d4ed8,#2563eb);
+  --theme-msg-in-bg:   rgba(255,255,255,0.06);
+  --theme-sidebar-bg:  rgba(13,15,20,0.92);
+  --theme-header-bg:   rgba(8,10,15,0.88);
+  --theme-bubble-a:    rgba(37,99,235,0.07);
+  --theme-bubble-b:    rgba(124,58,237,0.06);
+}
+
+/* ---- Midnight ---- */
+[data-theme="midnight"] {
+  --clr-bg-deep:       #07050f;
+  --clr-bg-base:       #0e0b1a;
+  --clr-bg-surface:    #161224;
+  --clr-bg-raised:     #1e1830;
+  --clr-bg-overlay:    rgba(14,11,26,0.85);
+  --clr-border:        rgba(167,139,250,0.10);
+  --clr-border-md:     rgba(167,139,250,0.18);
+  --clr-border-hover:  rgba(167,139,250,0.32);
+  --clr-primary:       #7c3aed;
+  --clr-primary-dim:   rgba(124,58,237,0.20);
+  --clr-primary-hover: #6d28d9;
+  --clr-primary-glow:  rgba(124,58,237,0.40);
+  --clr-accent:        #a78bfa;
+  --clr-accent-glow:   rgba(167,139,250,0.30);
+  --clr-text-primary:  #ede9fe;
+  --clr-text-secondary:rgba(237,233,254,0.55);
+  --clr-text-muted:    rgba(237,233,254,0.30);
+  --shadow-card:       0 8px 32px rgba(0,0,0,0.65);
+  --shadow-btn:        0 2px 12px rgba(124,58,237,0.35);
+  --theme-msg-out-bg:  linear-gradient(135deg,#6d28d9,#7c3aed);
+  --theme-msg-in-bg:   rgba(167,139,250,0.08);
+  --theme-sidebar-bg:  rgba(14,11,26,0.94);
+  --theme-header-bg:   rgba(7,5,15,0.90);
+  --theme-bubble-a:    rgba(124,58,237,0.10);
+  --theme-bubble-b:    rgba(167,139,250,0.07);
+}
+
+/* ---- Ocean ---- */
+[data-theme="ocean"] {
+  --clr-bg-deep:       #020d12;
+  --clr-bg-base:       #061520;
+  --clr-bg-surface:    #0c2030;
+  --clr-bg-raised:     #122b3e;
+  --clr-bg-overlay:    rgba(6,21,32,0.85);
+  --clr-border:        rgba(34,211,238,0.10);
+  --clr-border-md:     rgba(34,211,238,0.18);
+  --clr-border-hover:  rgba(34,211,238,0.32);
+  --clr-primary:       #0891b2;
+  --clr-primary-dim:   rgba(8,145,178,0.20);
+  --clr-primary-hover: #0e7490;
+  --clr-primary-glow:  rgba(8,145,178,0.40);
+  --clr-accent:        #22d3ee;
+  --clr-accent-glow:   rgba(34,211,238,0.30);
+  --clr-text-primary:  #e0f7fa;
+  --clr-text-secondary:rgba(224,247,250,0.55);
+  --clr-text-muted:    rgba(224,247,250,0.30);
+  --shadow-card:       0 8px 32px rgba(0,0,0,0.60);
+  --shadow-btn:        0 2px 12px rgba(8,145,178,0.35);
+  --theme-msg-out-bg:  linear-gradient(135deg,#0e7490,#0891b2);
+  --theme-msg-in-bg:   rgba(34,211,238,0.07);
+  --theme-sidebar-bg:  rgba(6,21,32,0.94);
+  --theme-header-bg:   rgba(2,13,18,0.90);
+  --theme-bubble-a:    rgba(8,145,178,0.10);
+  --theme-bubble-b:    rgba(34,211,238,0.07);
+}
+
+/* ---- Forest ---- */
+[data-theme="forest"] {
+  --clr-bg-deep:       #030a05;
+  --clr-bg-base:       #071209;
+  --clr-bg-surface:    #0d1f10;
+  --clr-bg-raised:     #142b17;
+  --clr-bg-overlay:    rgba(7,18,9,0.85);
+  --clr-border:        rgba(74,222,128,0.10);
+  --clr-border-md:     rgba(74,222,128,0.17);
+  --clr-border-hover:  rgba(74,222,128,0.30);
+  --clr-primary:       #16a34a;
+  --clr-primary-dim:   rgba(22,163,74,0.20);
+  --clr-primary-hover: #15803d;
+  --clr-primary-glow:  rgba(22,163,74,0.40);
+  --clr-accent:        #4ade80;
+  --clr-accent-glow:   rgba(74,222,128,0.30);
+  --clr-text-primary:  #dcfce7;
+  --clr-text-secondary:rgba(220,252,231,0.55);
+  --clr-text-muted:    rgba(220,252,231,0.30);
+  --shadow-card:       0 8px 32px rgba(0,0,0,0.60);
+  --shadow-btn:        0 2px 12px rgba(22,163,74,0.35);
+  --theme-msg-out-bg:  linear-gradient(135deg,#15803d,#16a34a);
+  --theme-msg-in-bg:   rgba(74,222,128,0.07);
+  --theme-sidebar-bg:  rgba(7,18,9,0.94);
+  --theme-header-bg:   rgba(3,10,5,0.90);
+  --theme-bubble-a:    rgba(22,163,74,0.10);
+  --theme-bubble-b:    rgba(74,222,128,0.07);
+}
+
+/* ---- Rose ---- */
+[data-theme="rose"] {
+  --clr-bg-deep:       #0f0508;
+  --clr-bg-base:       #180810;
+  --clr-bg-surface:    #220d18;
+  --clr-bg-raised:     #2d1220;
+  --clr-bg-overlay:    rgba(24,8,16,0.85);
+  --clr-border:        rgba(251,113,133,0.10);
+  --clr-border-md:     rgba(251,113,133,0.18);
+  --clr-border-hover:  rgba(251,113,133,0.32);
+  --clr-primary:       #e11d48;
+  --clr-primary-dim:   rgba(225,29,72,0.20);
+  --clr-primary-hover: #be123c;
+  --clr-primary-glow:  rgba(225,29,72,0.40);
+  --clr-accent:        #fb7185;
+  --clr-accent-glow:   rgba(251,113,133,0.30);
+  --clr-text-primary:  #ffe4e6;
+  --clr-text-secondary:rgba(255,228,230,0.55);
+  --clr-text-muted:    rgba(255,228,230,0.30);
+  --shadow-card:       0 8px 32px rgba(0,0,0,0.60);
+  --shadow-btn:        0 2px 12px rgba(225,29,72,0.35);
+  --theme-msg-out-bg:  linear-gradient(135deg,#be123c,#e11d48);
+  --theme-msg-in-bg:   rgba(251,113,133,0.07);
+  --theme-sidebar-bg:  rgba(24,8,16,0.94);
+  --theme-header-bg:   rgba(15,5,8,0.90);
+  --theme-bubble-a:    rgba(225,29,72,0.10);
+  --theme-bubble-b:    rgba(251,113,133,0.07);
+}
+
+/* ---- Slate ---- */
+[data-theme="slate"] {
+  --clr-bg-deep:       #080c10;
+  --clr-bg-base:       #0f1318;
+  --clr-bg-surface:    #171c23;
+  --clr-bg-raised:     #1f252e;
+  --clr-bg-overlay:    rgba(15,19,24,0.85);
+  --clr-border:        rgba(148,163,184,0.10);
+  --clr-border-md:     rgba(148,163,184,0.17);
+  --clr-border-hover:  rgba(148,163,184,0.30);
+  --clr-primary:       #475569;
+  --clr-primary-dim:   rgba(71,85,105,0.22);
+  --clr-primary-hover: #334155;
+  --clr-primary-glow:  rgba(71,85,105,0.40);
+  --clr-accent:        #94a3b8;
+  --clr-accent-glow:   rgba(148,163,184,0.25);
+  --clr-text-primary:  #f1f5f9;
+  --clr-text-secondary:rgba(241,245,249,0.55);
+  --clr-text-muted:    rgba(241,245,249,0.30);
+  --shadow-card:       0 8px 32px rgba(0,0,0,0.55);
+  --shadow-btn:        0 2px 12px rgba(71,85,105,0.30);
+  --theme-msg-out-bg:  linear-gradient(135deg,#334155,#475569);
+  --theme-msg-in-bg:   rgba(148,163,184,0.07);
+  --theme-sidebar-bg:  rgba(15,19,24,0.94);
+  --theme-header-bg:   rgba(8,12,16,0.90);
+  --theme-bubble-a:    rgba(71,85,105,0.12);
+  --theme-bubble-b:    rgba(148,163,184,0.08);
+}
+
+/* ============================================================
+   Chat Background Patterns
+   Applied to .chat-messages-wrap via data-chatbg on <html>.
+   Uses --theme-bubble-a/b so bubbles match the active theme.
+   ============================================================ */
+[data-chatbg="none"] .chat-messages-wrap {
+  background-image: none;
+}
+[data-chatbg="dots"] .chat-messages-wrap {
+  background-image: radial-gradient(
+    circle, rgba(255,255,255,0.055) 1px, transparent 1px
+  );
+  background-size: 24px 24px;
+}
+[data-chatbg="grid"] .chat-messages-wrap {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.038) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+[data-chatbg="waves"] .chat-messages-wrap {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent, transparent 12px,
+    rgba(255,255,255,0.028) 12px, rgba(255,255,255,0.028) 13px
+  );
+}
+/* Bubbles uses --theme-bubble-a/b (set per theme above) */
+[data-chatbg="bubbles"] .chat-messages-wrap {
+  background-image:
+    radial-gradient(ellipse at 20% 30%, var(--theme-bubble-a, rgba(37,99,235,0.07)) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 70%, var(--theme-bubble-b, rgba(124,58,237,0.06)) 0%, transparent 55%);
+}
+
+/* ============================================================
+   Theme-aware component overrides
+   ============================================================ */
+
+/* Message bubbles */
+.msg-bubble.outgoing {
+  background: var(--theme-msg-out-bg, linear-gradient(135deg,#1d4ed8,#2563eb));
+}
+.msg-bubble.incoming {
+  background: var(--theme-msg-in-bg, rgba(255,255,255,0.06));
+}
+
+/* Sidebar */
+.chat-sidebar {
+  background: var(--theme-sidebar-bg, rgba(13,15,20,0.92)) !important;
+}
+
+/* Header — target the actual header element */
+.cr-header {
+  background: var(--theme-header-bg, rgba(8,10,15,0.88)) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* ============================================================
+   Mobile — reduce pattern density on small screens
+   ============================================================ */
+@media (max-width: 480px) {
+  [data-chatbg="dots"] .chat-messages-wrap {
+    background-size: 20px 20px;
+  }
+  [data-chatbg="grid"] .chat-messages-wrap {
+    background-size: 28px 28px;
+  }
+}
+
+

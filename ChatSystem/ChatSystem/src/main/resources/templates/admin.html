@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme ?: 'dark'}, data-chatbg=${chatBg ?: 'none'}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — ChatRoom</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-bold-rounded/css/uicons-bold-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/variables.css"/>
+  <link rel="stylesheet" href="/css/reset.css"/>
+  <link rel="stylesheet" href="/css/header.css"/>
+  <link rel="stylesheet" href="/css/admin.css"/>
+  <link rel="stylesheet" href="/css/themes.css"/>
+
+  <!-- Theme (no defer — must run before render to avoid flash) -->
+  <script src="/js/theme.js"></script>
+
+  <script src="/js/jquery.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <div th:replace="~{header :: headerFragment}"></div>
+
+  <div class="admin-container">
+    <div class="admin-header">
+      <div class="admin-title">
+        <i class="fi fi-sr-shield-check"></i> Admin Dashboard
+      </div>
+      <a href="/chat" class="back-btn"><i class="fi fi-rr-arrow-left"></i> Back to Chat</a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="admin-stats-grid" id="statsGrid">
+      <div class="admin-stat-card"><div class="stat-icon" style="background:rgba(37,99,235,0.15);color:#93c5fd;"><i class="fi fi-sr-message"></i></div><div class="stat-number" id="statMessages">0</div><div class="stat-label">Total Messages</div></div>
+      <div class="admin-stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="fi fi-sr-users"></i></div><div class="stat-number" id="statUsers">0</div><div class="stat-label">Total Users</div></div>
+      <div class="admin-stat-card"><div class="stat-icon" style="background:rgba(251,191,36,0.15);color:#fbbf24;"><i class="fi fi-sr-user"></i></div><div class="stat-number" id="statOnline">0</div><div class="stat-label">Online Now</div></div>
+      <div class="admin-stat-card"><div class="stat-icon" style="background:rgba(124,58,237,0.15);color:#a78bfa;"><i class="fi fi-sr-users-alt"></i></div><div class="stat-number" id="statGroups">0</div><div class="stat-label">Total Groups</div></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="admin-card">
+      <div class="admin-card-header"><h2><i class="fi fi-rr-chart-line"></i> Messages (Last 7 Days)</h2></div>
+      <div class="admin-chart" id="adminChart"></div>
+    </div>
+
+    <!-- Global Announcement -->
+    <div class="admin-card">
+      <div class="admin-card-header"><h2><i class="fi fi-rr-megaphone"></i> Global Announcement</h2></div>
+      <div class="admin-announce">
+        <textarea id="announceMessage" class="admin-input" placeholder="Type your announcement message..." maxlength="500"></textarea>
+        <button class="action-btn btn-announce" onclick="sendAnnouncement()"><i class="fi fi-rr-megaphone"></i> Send to All Users</button>
+        <div id="announceStatus" class="announce-status"></div>
+      </div>
+    </div>
+
+    <!-- Manage Users -->
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h2><i class="fi fi-rr-user"></i> Manage Users</h2>
+      </div>
+      <div class="table-responsive">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Online</th>
+              <th>Status</th>
+              <th>Messages</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Mobile card list (shown on small screens) -->
+      <div class="admin-user-cards" id="usersCardList"></div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      loadStats();
+      loadUsers();
+    });
+
+    function loadStats() {
+      $.get('/api/admin/stats', function(data) {
+        $('#statMessages').text(data.totalMessages.toLocaleString());
+        $('#statUsers').text(data.totalUsers);
+        $('#statOnline').text(data.onlineUsers);
+        $('#statGroups').text(data.totalGroups);
+
+        // Render mini chart
+        var chartHtml = '<div class="chart-bars">';
+        var max = Math.max(1, ...data.messageChart.map(function(p) { return p.count; }));
+        data.messageChart.forEach(function(p) {
+          var h = Math.max(4, (p.count / max) * 120);
+          chartHtml += '<div class="chart-bar-wrap"><div class="chart-bar" style="height:' + h + 'px" title="' + p.date + ': ' + p.count + ' msgs"></div><div class="chart-label">' + p.date + '</div></div>';
+        });
+        chartHtml += '</div>';
+        $('#adminChart').html(chartHtml);
+      });
+    }
+
+    function loadUsers() {
+      $.get('/api/admin/users', function(data) {
+        var tbody = $('#usersTableBody');
+        var cardList = $('#usersCardList');
+        tbody.empty();
+        cardList.empty();
+
+        data.forEach(function(u) {
+          var onlineDot = u.online ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>';
+          var statusHtml = u.banned 
+            ? '<span class="status-badge banned">Banned</span>' 
+            : '<span class="status-badge active">Active</span>';
+          
+          var actionBtn = '';
+          if (u.username === 'admin') {
+            actionBtn = '<span class="admin-label">Admin</span>';
+          } else {
+            actionBtn = u.banned
+              ? '<button class="action-btn btn-unban" onclick="unbanUser(\'' + u.username + '\')"><i class="fi fi-br-unlock"></i> Unban</button>'
+              : '<button class="action-btn btn-ban" onclick="banUser(\'' + u.username + '\')"><i class="fi fi-br-lock"></i> Ban</button>';
+          }
+
+          // Table row (desktop)
+          var row = '<tr>' +
+            '<td><span class="user-cell">' + onlineDot + ' @' + u.username + '</span></td>' +
+            '<td>' + (u.fullname || '-') + '</td>' +
+            '<td>' + (u.email || '-') + '</td>' +
+            '<td>' + (u.online ? 'Online' : 'Offline') + '</td>' +
+            '<td>' + statusHtml + '</td>' +
+            '<td>' + (u.messageCount || 0) + '</td>' +
+            '<td>' + actionBtn + '</td>' +
+            '</tr>';
+          tbody.append(row);
+
+          // Card (mobile)
+          var card = '<div class="admin-user-card">' +
+            '<div class="auc-header">' +
+              '<span class="user-cell">' + onlineDot + ' <strong>@' + u.username + '</strong></span>' +
+              statusHtml +
+            '</div>' +
+            '<div class="auc-row"><span class="auc-label">Full Name</span><span>' + (u.fullname || '-') + '</span></div>' +
+            '<div class="auc-row"><span class="auc-label">Email</span><span class="auc-email">' + (u.email || '-') + '</span></div>' +
+            '<div class="auc-row"><span class="auc-label">Messages</span><span>' + (u.messageCount || 0) + '</span></div>' +
+            '<div class="auc-actions">' + actionBtn + '</div>' +
+            '</div>';
+          cardList.append(card);
+        });
+      });
+    }
+
+    function banUser(username) {
+      if(confirm('Are you sure you want to ban @' + username + '?')) {
+        $.post('/api/admin/ban/' + username, function() { loadUsers(); });
+      }
+    }
+
+    function unbanUser(username) {
+      if(confirm('Are you sure you want to unban @' + username + '?')) {
+        $.post('/api/admin/unban/' + username, function() { loadUsers(); });
+      }
+    }
+
+    function sendAnnouncement() {
+      var msg = $('#announceMessage').val().trim();
+      if (!msg) { $('#announceStatus').text('Please enter a message').addClass('error'); return; }
+      $('#announceStatus').text('Sending...').removeClass('error success');
+      $.ajax({
+        url: '/api/admin/announce',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ message: msg }),
+        success: function() {
+          $('#announceMessage').val('');
+          $('#announceStatus').text('Announcement sent to all users!').addClass('success');
+        },
+        error: function(xhr) {
+          $('#announceStatus').text(xhr.responseText || 'Failed to send').addClass('error');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

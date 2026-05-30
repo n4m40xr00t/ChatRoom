@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme ?: 'dark'}, data-chatbg=${chatBg ?: 'none'}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Two-Factor Authentication — ChatRoom</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-bold-rounded/css/uicons-bold-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/variables.css"/>
+  <link rel="stylesheet" href="/css/reset.css"/>
+  <link rel="stylesheet" href="/css/loading.css"/>
+  <link rel="stylesheet" href="/css/header.css"/>
+  <link rel="stylesheet" href="/css/home.css"/>
+  <link rel="stylesheet" href="/css/mfa.css"/>
+  <link rel="stylesheet" href="/css/themes.css"/>
+
+  <!-- Theme (no defer — must run before render to avoid flash) -->
+  <script src="/js/theme.js"></script>
+
+  <!-- Scripts -->
+  <script defer src="/js/jquery.js"></script>
+  <script defer src="/js/loading.js"></script>
+</head>
+
+<body>
+  <!-- Loader -->
+  <div class="loader_container" id="loader_cont_id">
+    <div class="lds-roller" id="loader_main_id">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div class="problem" id="problem_id">
+      Do you have any problem? <a href="#">Contact us</a> now.
+    </div>
+    <div class="by_who" id="by_who_id">by Natiq</div>
+  </div>
+
+  <!-- Header -->
+  <div th:replace="~{header :: headerFragment}"></div>
+
+  <div class="container_login_and_sign_up_main">
+    <div class="container_of_section">
+
+      <!-- Left: info text -->
+      <div class="section_1">
+        <div class="text_wlcm big_text">Two-Factor<br/>Authentication</div>
+        <div class="text_wlcm small_text">
+          Your account is protected with an extra layer of security.
+          Open your authenticator app and enter the 6-digit code to continue.
+        </div>
+      </div>
+
+      <!-- Right: OTP card -->
+      <div class="section_2">
+        <div class="login_and_signup_cont_inner mfa-card">
+
+          <!-- Shield icon -->
+          <div class="mfa-shield-wrap">
+            <div class="mfa-shield">
+              <i class="fi fi-sr-shield-check"></i>
+            </div>
+          </div>
+
+          <div class="form-heading" style="margin-bottom:6px;">Verify Your Identity</div>
+          <p class="mfa-subtitle">Enter the 6-digit code from your authenticator app</p>
+
+          <!-- Error -->
+          <div th:if="${param.error}" class="check mfa-error-box">
+            <i class="fi fi-sr-exclamation" style="margin-right:6px;"></i>
+            Invalid code. Please try again.
+          </div>
+
+          <!-- Countdown ring -->
+          <div class="mfa-timer-wrap">
+            <svg class="mfa-timer-svg" viewBox="0 0 56 56">
+              <circle class="mfa-timer-track" cx="28" cy="28" r="24"/>
+              <circle class="mfa-timer-ring" id="mfa-timer-ring" cx="28" cy="28" r="24"/>
+            </svg>
+            <span class="mfa-timer-label" id="mfa-timer-label">30</span>
+          </div>
+
+          <!-- OTP input form -->
+          <form method="POST" th:action="@{/mfa-verify}" id="mfa-form" autocomplete="off" style="width:100%;">
+            <div class="mfa-otp-row" id="mfa-otp-row-verify">
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                     class="mfa-otp-digit" id="d0" autofocus autocomplete="one-time-code"/>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                     class="mfa-otp-digit" id="d1" autocomplete="one-time-code"/>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                     class="mfa-otp-digit" id="d2" autocomplete="one-time-code"/>
+              <div class="mfa-otp-sep" aria-hidden="true">—</div>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                     class="mfa-otp-digit" id="d3" autocomplete="one-time-code"/>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                     class="mfa-otp-digit" id="d4" autocomplete="one-time-code"/>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                     class="mfa-otp-digit" id="d5" autocomplete="one-time-code"/>
+            </div>
+            <!-- Hidden field that collects the full 6-digit code -->
+            <input type="hidden" name="code" id="mfa-code-hidden"/>
+
+            <div class="buttons_main_cont" style="margin-top:24px;">
+              <button class="button_main_submit" type="submit" id="mfa-submit-btn"
+                      style="min-height:48px;touch-action:manipulation;">
+                <span>Verify</span>
+              </button>
+              <div class="other_info_for_login_and_sign_up">
+                <div class="text_wlcm small_text bottom_text">
+                  <a href="/login">← Back to login</a>
+                </div>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ---- OTP digit inputs: auto-advance, backspace, paste ---- */
+    (function() {
+      var digits = document.querySelectorAll('.mfa-otp-digit');
+      var form   = document.getElementById('mfa-form');
+      var hidden = document.getElementById('mfa-code-hidden');
+
+      digits.forEach(function(input, idx) {
+        input.addEventListener('input', function() {
+          // Keep only digits
+          this.value = this.value.replace(/\D/g, '').slice(-1);
+          if (this.value && idx < digits.length - 1) {
+            digits[idx + 1].focus();
+          }
+          syncHidden();
+        });
+
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && !this.value && idx > 0) {
+            digits[idx - 1].focus();
+            digits[idx - 1].value = '';
+            syncHidden();
+          }
+        });
+
+        // Allow pasting a full 6-digit code
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+          if (pasted.length >= 6) {
+            for (var i = 0; i < 6; i++) {
+              digits[i].value = pasted[i] || '';
+            }
+            digits[5].focus();
+            syncHidden();
+          }
+        });
+      });
+
+      function syncHidden() {
+        var code = '';
+        digits.forEach(function(d) { code += d.value; });
+        hidden.value = code;
+      }
+
+      form.addEventListener('submit', function(e) {
+        syncHidden();
+        if (hidden.value.length !== 6) {
+          e.preventDefault();
+          // Shake the inputs
+          document.querySelector('.mfa-otp-row').classList.add('mfa-shake');
+          setTimeout(function() {
+            document.querySelector('.mfa-otp-row').classList.remove('mfa-shake');
+          }, 500);
+        }
+      });
+    })();
+
+    /* ---- TOTP countdown ring ---- */
+    (function() {
+      var ring  = document.getElementById('mfa-timer-ring');
+      var label = document.getElementById('mfa-timer-label');
+      var PERIOD = 30;
+      var CIRCUMFERENCE = 2 * Math.PI * 24; // r=24
+
+      ring.style.strokeDasharray  = CIRCUMFERENCE;
+      ring.style.strokeDashoffset = 0;
+
+      function tick() {
+        var now     = Math.floor(Date.now() / 1000);
+        var elapsed = now % PERIOD;
+        var remaining = PERIOD - elapsed;
+
+        label.textContent = remaining;
+
+        // Fraction of the period remaining (1 → full ring, 0 → empty)
+        var fraction = remaining / PERIOD;
+        ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
+
+        // Color shift: green → yellow → red as time runs out
+        if (remaining > 10) {
+          ring.style.stroke = '#2563eb';
+        } else if (remaining > 5) {
+          ring.style.stroke = '#f59e0b';
+        } else {
+          ring.style.stroke = '#ef4444';
+        }
+      }
+
+      tick();
+      setInterval(tick, 1000);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme ?: 'dark'}, data-chatbg=${chatBg ?: 'none'}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat — ChatRoom</title>
+  <meta name="username" id="currentUsername" th:content="${username}"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-bold-rounded/css/uicons-bold-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css"/>
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/variables.css"/>
+  <link rel="stylesheet" href="/css/reset.css"/>
+  <link rel="stylesheet" href="/css/loading.css"/>
+  <link rel="stylesheet" href="/css/header.css"/>
+  <link rel="stylesheet" href="/css/chat.css"/>
+  <link rel="stylesheet" href="/css/themes.css"/>
+  <link rel="stylesheet" href="/css/call.css"/>
+
+  <!-- Theme (no defer — must run before render to avoid flash) -->
+  <script src="/js/theme.js"></script>
+
+  <!-- Emoji Mart (vanilla JS build) -->
+  <script src="https://cdn.jsdelivr.net/npm/emoji-mart@5.6.0/dist/browser.js"></script>
+
+  <!-- Scripts -->
+  <script defer src="/js/jquery.js"></script>
+  <script defer src="/js/loading.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script defer src="/js/chat.js"></script>
+  <script defer src="/js/webrtc-call.js"></script>
+  <script defer src="/js/call-integration.js"></script>
+</head>
+
+<body>
+
+  <!-- Loader -->
+  <div class="loader_container" id="loader_cont_id">
+    <div class="lds-roller" id="loader_main_id">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div class="problem" id="problem_id">
+      Do you have any problem? <a href="#">Contact us</a> now.
+    </div>
+    <div class="by_who" id="by_who_id">by Natiq</div>
+  </div>
+
+  <!-- Header -->
+  <div th:replace="~{header :: headerFragment}"></div>
+
+  <!-- Contact Tooltip (global overlay) -->
+  <div class="cr-contact-tooltip" id="cr-contact-tooltip">
+    <div class="tooltip-avatar" id="tooltip-avatar"></div>
+    <div class="tooltip-name" id="tooltip-name">Name</div>
+    <div class="tooltip-username" id="tooltip-username">@username</div>
+    <div class="tooltip-bio" id="tooltip-bio" style="font-size:11px;color:var(--clr-text-muted);text-align:center;margin-bottom:10px;word-break:break-word;display:none;"></div>
+    <div class="tooltip-actions">
+      <button class="tooltip-btn tooltip-btn-chat" id="tooltip-chat-btn">
+        <i class="fi fi-sr-comment-dots"></i> Chat
+      </button>
+      <button class="tooltip-btn tooltip-btn-call" id="tooltip-call-btn" style="display:none;">
+        <i class="fi fi-rr-phone-call"></i>
+      </button>
+      <button class="tooltip-btn tooltip-btn-video" id="tooltip-video-btn" style="display:none;">
+        <i class="fi fi-rr-video-camera"></i>
+      </button>
+      <button class="tooltip-btn tooltip-btn-invite" id="tooltip-invite-btn" style="display:none;">
+        <i class="fi fi-sr-user-add"></i> Add Friend
+      </button>
+      <button class="tooltip-btn tooltip-btn-block" id="tooltip-block-btn" style="display:none;">
+        <i class="fi fi-rr-ban"></i> Block
+      </button>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="chat-page-root">
+    <div class="chat-body" id="chat-body">
+
+      <!-- ========================= SIDEBAR ========================= -->
+      <aside class="chat-sidebar" id="chat-sidebar">
+
+        <!-- My profile bar -->
+        <div class="sidebar-profile-bar">
+          <div class="sidebar-profile-avatar" id="my-avatar">
+            <img th:if="${user.profilePicture != null}" th:src="${user.profilePicture}" alt="Profile"/>
+            <span th:unless="${user.profilePicture != null}"
+                  th:text="${user.fullname != null} ? ${#strings.toUpperCase(#strings.substring(user.fullname,0,1))} : '?'"></span>
+          </div>
+          <div class="sidebar-profile-info">
+            <div class="sidebar-profile-name" th:text="${user.fullname}">Name</div>
+            <div class="sidebar-profile-status online"
+                 th:classappend="${user.status} ? 'online' : 'offline'"
+                 th:text="${user.status} ? 'online' : 'offline'">online</div>
+          </div>
+          <div class="sidebar-profile-toolbar">
+            <button type="button" class="sidebar-settings-btn sidebar-create-group-btn" id="btnOpenCreateGroup" title="Create group" aria-label="Create group">
+              <i class="fi fi-br-users"></i>
+            </button>
+            <a th:if="${username == 'admin'}" href="/admin" class="sidebar-settings-btn" title="Admin Dashboard">
+              <i class="fi fi-sr-shield-check"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="sidebar-search-bar">
+          <div class="sidebar-search-inner">
+            <i class="fi fi-rr-search" id="sidebarSearchIcon"></i>
+            <input type="text" class="sidebar-search-input" id="contactSearch" placeholder="Search contacts & messages…"/>
+            <button class="sidebar-search-clear" id="sidebarSearchClear" title="Clear" style="display:none;">
+              <i class="fi fi-rr-cross-small"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Global search results panel (shown when typing) -->
+        <div class="sidebar-global-search-panel" id="sidebarGlobalSearchPanel" style="display:none;">
+          <div class="sgsp-section-label" id="sgspContactsLabel">Contacts</div>
+          <div id="sgspContactsList"></div>
+          <div class="sgsp-section-label sgsp-section-label--msgs" id="sgspMessagesLabel" style="display:none;">Messages</div>
+          <div id="sgspMessagesList"></div>
+          <div class="sgsp-empty" id="sgspEmpty" style="display:none;">
+            <i class="fi fi-rr-search"></i> No results found
+          </div>
+        </div>
+
+        <!-- Chats + groups (single scroll like one list) -->
+        <div class="sidebar-contacts-scroll">
+          <div class="sidebar-contacts-label">Chats</div>
+          <div class="sidebar-list-chunk">
+            <div id="onlineUsersList">
+              <div class="cr-contact-item public-chat-item active" onclick="selectUser('public')" id="contact-item-public">
+                <div class="cr-contact-avatar" style="background:linear-gradient(135deg,#2563eb,#7c3aed);">
+                  <i class="fi fi-sr-comment-dots"></i>
+                </div>
+                <div class="cr-contact-info">
+                  <div class="cr-contact-name">Public Chat Room</div>
+                  <div class="contact_last_msg">Everyone can see this</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sidebar-contacts-label sidebar-contacts-label--groups">Groups</div>
+          <div class="sidebar-list-chunk sidebar-list-chunk--groups">
+            <div id="groupChatList" class="sidebar-groups-list"></div>
+          </div>
+        </div>
+
+        <!-- Resize handle -->
+        <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+      </aside>
+
+      <!-- ========================= MAIN CHAT ========================= -->
+      <main class="chat-main">
+
+        <!-- Top bar -->
+        <div class="chat-topbar">
+          <div class="chat-topbar-left" style="cursor:pointer;" id="topbarUserInfo" title="Click for info">
+            <button type="button" class="mobile-sidebar-toggle" id="mobileSidebarToggle" title="Open Contacts">
+              <i class="fi fi-br-menu-burger"></i>
+            </button>
+            <div class="chat-topbar-avatar" id="chatAvatarCircle"
+                 style="background:linear-gradient(135deg,#2563eb,#7c3aed);">
+              <i class="fi fi-sr-comment-dots"></i>
+            </div>
+            <div class="chat-topbar-info">
+              <div class="chat-topbar-name" id="selectedUserName">Public Chat Room</div>
+              <div class="chat-topbar-sub" id="selectedUserInfo">Chatting with everyone</div>
+            </div>
+          </div>
+          <div class="chat-topbar-right">
+            <div class="chat-topbar-actions" style="display:flex;gap:6px;align-items:center;">
+                <!-- Call Buttons (shown only for private chats) -->
+                <button class="topbar-action-btn" id="audio-call-btn" title="Audio Call" style="display:none;">
+                    <i class="fi fi-rr-phone-call"></i>
+                </button>
+                <button class="topbar-action-btn" id="video-call-btn" title="Video Call" style="display:none;">
+                    <i class="fi fi-rr-video-camera"></i>
+                </button>
+                <button class="topbar-action-btn" id="chat-lock-btn" title="Lock Chat" style="display:none;">
+                    <i class="fi fi-rr-lock"></i>
+                </button>
+                <!-- Bulk Delete Icon -->
+                <button class="topbar-action-btn bulk-delete-btn" id="bulk-delete-toggle" title="Select Messages">
+                    <i class="fi fi-br-check"></i>
+                </button>
+                <button class="topbar-action-btn info-btn" id="toggle-right-sidebar" title="Contact Info">
+                    <i class="fi fi-rr-info"></i>
+                </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pinned message bar (shown when a message is pinned) -->
+        <div class="pinned-msg-bar" id="pinnedMsgBar" style="display:none;">
+          <div class="pinned-msg-bar-inner" id="pinnedMsgBarInner">
+            <i class="fi fi-rr-thumbtack pinned-msg-icon"></i>
+            <div class="pinned-msg-text-wrap">
+              <span class="pinned-msg-label">Pinned Message</span>
+              <span class="pinned-msg-preview" id="pinnedMsgPreview"></span>
+            </div>
+            <button class="pinned-msg-jump" id="pinnedMsgJump" title="Jump to message">
+              <i class="fi fi-rr-arrow-right"></i>
+            </button>
+            <button class="pinned-msg-unpin" id="pinnedMsgUnpin" title="Unpin">
+              <i class="fi fi-rr-cross-small"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-lock-overlay" id="chatLockOverlay" style="display:none; position:absolute; top:var(--header-h); left:0; width:100%; height:calc(100% - var(--header-h)); background:rgba(13, 15, 20, 0.85); backdrop-filter:blur(16px); z-index:50; flex-direction:column; align-items:center; justify-content:center;">
+           <div class="chat-lock-card">
+               <i class="fi fi-sr-lock chat-lock-icon"></i>
+               <h2>Chat is Locked</h2>
+               <p>Enter PIN / Password to unlock</p>
+               
+               <input type="password" id="chatLockPasswordInput" class="cr-input lock-modal-input desktop-only-input" placeholder="Password" onkeydown="if(event.key === 'Enter') verifyChatLock()" readonly onfocus="this.removeAttribute('readonly');"/>
+               
+               <!-- Mobile PIN Pad -->
+               <div class="pin-pad mobile-only-pin">
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '1')">1</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '2')">2</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '3')">3</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '4')">4</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '5')">5</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '6')">6</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '7')">7</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '8')">8</button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '9')">9</button>
+                   <button class="pin-btn pin-action" onclick="removePinChar('chatLockPasswordInput')"><i class="fi fi-rr-delete"></i></button>
+                   <button class="pin-btn" onclick="addPinChar('chatLockPasswordInput', '0')">0</button>
+                   <button class="pin-btn pin-action pin-submit" onclick="verifyChatLock()"><i class="fi fi-br-check"></i></button>
+               </div>
+               
+               <div class="lock-modal-actions">
+                   <button class="cr-btn cr-btn-primary desktop-only-input" onclick="verifyChatLock()">Unlock</button>
+                   <button class="cr-btn cr-btn-secondary" onclick="removeChatLock()" id="removeChatLockBtn" style="display:none;">Remove Lock</button>
+               </div>
+           </div>
+        </div>
+
+        <div class="chat-messages-wrap" id="chatMessages">
+          <!-- Messages injected by chat.js -->
+        </div>
+        
+        <!-- Bulk Delete Action Bar (hidden by default) -->
+        <div class="bulk-delete-action-bar" id="bulk-delete-action-bar">
+            <span id="bulk-selected-count">0 selected</span>
+            <div class="bulk-actions">
+                <button id="cancel-bulk-btn" class="bulk-btn bulk-btn-cancel">Cancel</button>
+                <button id="confirm-bulk-btn" class="bulk-btn bulk-btn-danger">
+                    <i class="fi fi-rr-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Send Area -->
+        <div class="chat-send-bar">
+          <!-- Reply Preview Bar (hidden by default) -->
+          <div class="reply-preview-bar" id="replyPreviewBar" style="display:none;">
+            <div class="reply-preview-inner">
+              <div class="reply-preview-icon"><i class="fi fi-rr-undo"></i></div>
+              <div class="reply-preview-text">
+                <span class="reply-preview-sender" id="replyPreviewSender"></span>
+                <span class="reply-preview-content" id="replyPreviewContent"></span>
+              </div>
+              <button class="reply-preview-close" id="cancelReplyBtn" title="Cancel Reply">
+                <i class="fi fi-rr-cross"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Emoji Picker Popup (positioned above send bar) -->
+          <div id="emoji-picker-container" class="emoji-picker-container" style="display:none;"></div>
+          
+          <!-- Attachment Menu Popup -->
+          <div id="attachment-menu" class="attachment-menu" style="display:none;">
+            <button class="attachment-menu-item" type="button" onclick="document.getElementById('fileInput').click();">
+              <div class="attachment-icon image-icon"><i class="fi fi-rr-file"></i></div>
+              <span>File</span>
+            </button>
+            <button class="attachment-menu-item" type="button" id="scheduleBtn" style="display:none;">
+              <div class="attachment-icon schedule-icon"><i class="fi fi-rr-clock"></i></div>
+              <span>Schedule</span>
+            </button>
+          </div>
+
+          <div class="chat-send-inner">
+            <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-rar-compressed,application/x-7z-compressed,application/gzip,audio/mpeg,audio/wav,audio/ogg,audio/mp4,video/mp4,video/webm,video/ogg" style="display:none;"/>
+            
+            <!-- Emoji picker toggle -->
+            <button class="chat-send-icon-btn" type="button" id="emojiBtn" title="Emoji">
+              <i class="fi fi-rr-smile"></i>
+            </button>
+
+            <!-- Attachment toggle -->
+            <button class="chat-send-icon-btn" type="button" id="attachmentToggleBtn" title="Attachments">
+              <i class="fi fi-rr-plus"></i>
+            </button>
+
+            <!-- Voice recording indicator (shown while recording) -->
+            <div id="voice-recording-bar" class="voice-recording-bar" style="display:none;">
+              <span class="voice-rec-dot"></span>
+              <span class="voice-rec-timer" id="voiceRecTimer">0:00</span>
+              <span class="voice-rec-label">Tap ■ to send  ·  1:00 remaining</span>
+              <button class="voice-rec-cancel" id="voiceRecCancel" type="button" title="Cancel recording">
+                <i class="fi fi-rr-cross"></i>
+              </button>
+            </div>
+
+            <input type="text" id="messageInput" class="chat-send-input" placeholder="Type a message…" autocomplete="off"/>
+            <div class="emoji-autocomplete" id="emojiAutocomplete" style="display:none;"></div>
+
+            <!-- Send / Mic toggle button -->
+            <button class="chat-send-btn" id="sendButton" type="button" title="Send">
+              <i class="fi fi-sr-paper-plane" id="sendBtnIcon"></i>
+            </button>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Schedule Modal -->
+      <div id="scheduleModal" class="schedule-modal-overlay" style="display:none;">
+        <div class="schedule-modal-box">
+          <div class="schedule-modal-header">
+            <i class="fi fi-rr-clock"></i>
+            <h3>Schedule Message</h3>
+            <button id="closeScheduleModal"><i class="fi fi-rr-cross"></i></button>
+          </div>
+          <div class="schedule-modal-body">
+            <p class="schedule-modal-preview" id="schedulePreviewText"></p>
+            <label for="scheduleDateInput">Send at:</label>
+            <input type="datetime-local" id="scheduleDateInput" class="schedule-date-input"/>
+          </div>
+          <div class="schedule-modal-footer">
+            <button class="schedule-btn-cancel" id="cancelScheduleBtn">Cancel</button>
+            <button class="schedule-btn-confirm" id="confirmScheduleBtn">
+              <i class="fi fi-rr-clock"></i> Schedule
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Right sidebar backdrop (mobile) -->
+      <div id="right-sidebar-backdrop"></div>
+
+      <!-- ========================= RIGHT SIDEBAR ========================= -->
+      <aside class="chat-right-sidebar" id="right-sidebar">
+        <div class="right-sidebar-header rp-header">
+          <h3 id="rpPanelTitle">Contact Info</h3>
+          <button class="right-sidebar-close" id="rightSidebarClose"><i class="fi fi-rr-cross"></i></button>
+        </div>
+        <div class="right-sidebar-content rp-content">
+          <div class="right-profile-card rp-summary-card">
+            <div class="right-profile-avatar rp-summary-avatar" id="rightProfileAvatar">
+              <i class="fi fi-sr-comment-dots"></i>
+            </div>
+            <div class="right-profile-name rp-summary-name" id="rightProfileName">Public Chat Room</div>
+            <div class="right-profile-username rp-summary-sub" id="rightProfileUsername">Chatting with everyone</div>
+          </div>
+
+          <div class="rp-tabs" id="rpTabs">
+            <button type="button" class="rp-tab-btn is-active" id="rpTabInfo" data-tab="info">Info</button>
+            <button type="button" class="rp-tab-btn" id="rpTabSearch" data-tab="search">Search</button>
+            <button type="button" class="rp-tab-btn" id="rpTabGallery" data-tab="gallery"><i class="fi fi-rr-picture"></i> Gallery</button>
+          </div>
+
+          <div class="rp-views">
+            <section class="rp-view rp-view-info" id="rpInfoView">
+              <div class="rp-private-info-card" id="rpPrivateInfoCard">
+                <div class="rp-field-row">
+                  <span class="rp-field-label">Chat Type</span>
+                  <span class="rp-field-value" id="rpChatTypeValue">Public channel</span>
+                </div>
+                <div class="rp-field-row">
+                  <span class="rp-field-label">Details</span>
+                  <span class="rp-field-value" id="rpChatDetailsValue">Everyone can see this conversation</span>
+                </div>
+              </div>
+
+              <div class="right-group-panel rp-group-panel" id="rightGroupPanel" style="display:none;">
+                <div class="right-group-created rp-group-created" id="rightGroupCreated" style="display:none;">
+                  <i class="fi fi-rr-calendar"></i>
+                  <span id="rightGroupCreatedText"></span>
+                </div>
+
+                <div class="right-group-members-label rp-section-title">
+                  Members
+                  <span class="right-group-member-count" id="rightGroupMemberCount"></span>
+                </div>
+
+                <div class="rp-members-scroll" id="rpMembersScroll">
+                  <ul class="right-group-members rp-members-list" id="rightGroupMembersList"></ul>
+                </div>
+              </div>
+            </section>
+
+            <section class="rp-view rp-view-search" id="rpSearchView" style="display:none;">
+              <div class="right-search-box rp-search-box">
+                <i class="fi fi-rr-search"></i>
+                <input type="text" id="chatSearchInput" placeholder="Search in chat..."/>
+              </div>
+              <div class="search-results-container rp-search-results" id="searchResultsContainer">
+                <!-- Search results will appear here -->
+              </div>
+            </section>
+
+            <section class="rp-view rp-view-gallery" id="rpGalleryView" style="display:none;">
+              <div class="rp-gallery-scroll" id="rpGalleryScroll">
+                <div class="rp-gallery-grid" id="rpGalleryGrid">
+                  <!-- Gallery images will appear here -->
+                </div>
+                <div class="rp-gallery-empty" id="rpGalleryEmpty">
+                  <i class="fi fi-rr-picture"></i>
+                  <p>No images shared in this conversation yet.</p>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="rp-footer" id="rpFooter" style="display:none;">
+            <div class="rp-manage-wrap" id="rightGroupManageWrap" style="display:none;">
+              <button type="button" class="rp-manage-toggle" id="rightGroupManageToggle" aria-expanded="false">
+                <span><i class="fi fi-rr-settings-sliders"></i> Manage Group</span>
+                <i class="fi fi-rr-angle-small-down"></i>
+              </button>
+
+              <div class="right-group-admin-actions rp-manage-body" id="rightGroupAdminActions" style="display:none;">
+                <label class="right-group-inline-label">Add from contacts</label>
+                <select id="rightGroupAddMemberSelect" class="right-group-select"></select>
+                <button type="button" class="right-group-action-btn" id="rightGroupAddMemberBtn">Add member</button>
+                <hr class="right-group-divider"/>
+                <label class="right-group-inline-label">Group name</label>
+                <input type="text" id="rightGroupEditName" class="right-group-input"/>
+                <button type="button" class="right-group-action-btn" id="rightGroupSaveProfileBtn">Save name &amp; photo</button>
+                <label class="right-group-inline-label">Group photo</label>
+                <input type="file" id="rightGroupPictureInput" accept="image/*"/>
+              </div>
+            </div>
+            <button type="button" class="rp-leave-btn rp-invite-btn" id="rightGroupInviteBtn"><i class="fi fi-rr-link"></i> Share Invite Link</button>
+            <button type="button" class="right-group-leave-btn rp-leave-btn" id="rightGroupLeaveBtn"><i class="fi fi-rr-exit"></i> Leave group</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ========================= THREAD PANEL ========================= -->
+      <aside class="chat-thread-panel" id="threadPanel">
+        <div class="tp-header">
+          <h3><i class="fi fi-rr-comment-dots"></i> Thread</h3>
+          <button class="tp-close" id="threadPanelClose" title="Close thread"><i class="fi fi-rr-cross"></i></button>
+        </div>
+        <div class="tp-messages" id="threadMessages">
+          <div class="tp-loading">Loading thread...</div>
+        </div>
+        <div class="tp-input-area">
+          <input type="text" id="threadInput" class="tp-input" placeholder="Reply in thread..."/>
+          <button class="tp-send-btn" id="threadSendBtn" title="Send">
+            <i class="fi fi-sr-paper-plane"></i>
+          </button>
+        </div>
+      </aside>
+
+    </div><!-- .chat-body -->
+  </div><!-- .chat-page-root -->
+
+  <!-- Custom Context Menu -->
+  <div id="msg-context-menu" class="cr-context-menu">
+      <!-- Quick reaction bar (always visible at top of menu) -->
+      <div class="menu-quick-reactions" id="menu-quick-reactions">
+        <button class="quick-react-btn" data-emoji="👍" title="Like">👍</button>
+        <button class="quick-react-btn" data-emoji="❤️" title="Love">❤️</button>
+        <button class="quick-react-btn" data-emoji="😂" title="Haha">😂</button>
+        <button class="quick-react-btn" data-emoji="😮" title="Wow">😮</button>
+        <button class="quick-react-btn" data-emoji="😢" title="Sad">😢</button>
+        <button class="quick-react-btn" data-emoji="🔥" title="Fire">🔥</button>
+        <button class="quick-react-btn quick-react-more" id="menu-react-more" title="More reactions">＋</button>
+      </div>
+      <div class="menu-divider" style="margin-top:0;"></div>
+      <div class="menu-item" id="menu-copy"><i class="fi fi-br-copy"></i> Copy</div>
+      <div class="menu-item" id="menu-thread-ctx"><i class="fi fi-rr-comment-dots"></i> Thread</div>
+      <div class="menu-item" id="menu-reply-ctx"><i class="fi fi-rr-undo"></i> Reply</div>
+      <div class="menu-item" id="menu-forward"><i class="fi fi-rr-share"></i> Forward</div>
+      <div class="menu-item" id="menu-pin"><i class="fi fi-rr-thumbtack"></i> Pin</div>
+      <div class="menu-item" id="menu-edit"><i class="fi fi-rr-pencil"></i> Edit</div>
+      <div class="menu-item menu-danger" id="menu-delete"><i class="fi fi-rr-trash"></i> Delete</div>
+      <div class="menu-item menu-danger" id="menu-delete-for-me"><i class="fi fi-rr-eye-crossed"></i> Delete for me</div>
+      <div class="menu-item" id="menu-select"><i class="fi fi-rr-checkbox"></i> Select</div>
+      <div class="menu-divider"></div>
+      <div class="menu-item" id="menu-info"><i class="fi fi-rr-info"></i> Info</div>
+  </div>
+
+  <!-- Reaction full emoji picker popup (shown when clicking "more") -->
+  <div id="reaction-picker-container" class="reaction-picker-container" style="display:none;"></div>
+
+      <!-- Create group modal -->
+      <div id="createGroupModal" class="schedule-modal-overlay create-group-modal-overlay" style="display:none;">
+        <div class="schedule-modal-box create-group-modal-box">
+          <div class="schedule-modal-header create-group-modal-header">
+            <div class="create-group-modal-header-icon"><i class="fi fi-br-users"></i></div>
+            <h3>New group chat</h3>
+            <button type="button" class="create-group-close-btn" id="closeCreateGroupModal" aria-label="Close"><i class="fi fi-rr-cross"></i></button>
+          </div>
+          <div class="schedule-modal-body create-group-modal-body">
+            <div class="create-group-intro">Name your group, add a photo, and optionally invite contacts.</div>
+
+            <div class="create-group-photo-row">
+              <div class="create-group-preview-ring" id="createGroupPreviewRing" title="Group photo preview">
+                <img id="createGroupPhotoPreviewImg" class="create-group-preview-img" src="" alt=""/>
+                <div class="create-group-preview-ph" id="createGroupPhotoPh"><i class="fi fi-br-picture"></i></div>
+              </div>
+              <div class="create-group-photo-side">
+                <span class="create-group-field-label">Photo <span class="create-group-opt">optional</span></span>
+                <div class="create-group-photo-buttons">
+                  <button type="button" class="create-group-photo-btn" id="createGroupPickPhotoBtn"><i class="fi fi-rr-picture"></i> Choose image</button>
+                  <button type="button" class="create-group-photo-btn create-group-photo-btn--ghost" id="createGroupRemovePhotoBtn" style="display:none;">Remove</button>
+                </div>
+                <p class="create-group-photo-hint">PNG / JPG · max 5 MB</p>
+                <input type="file" id="createGroupPicture" accept="image/*" hidden/>
+              </div>
+            </div>
+
+            <label class="create-group-field-label" for="createGroupName">Group name</label>
+            <input type="text" id="createGroupName" class="schedule-date-input create-group-name-input" placeholder="e.g. Study group, Weekend crew…" maxlength="120" autocomplete="off"/>
+
+            <div class="create-group-members-section">
+              <div class="create-group-members-head">
+                <span class="create-group-field-label">Invite from contacts <span class="create-group-opt">optional</span></span>
+                <span class="create-group-selected-pill" id="createGroupSelectedCount">No contacts selected</span>
+              </div>
+              <div class="create-group-search-wrap">
+                <i class="fi fi-rr-search"></i>
+                <input type="text" id="createGroupMemberSearch" class="create-group-search-input" placeholder="Search by name or @username…" autocomplete="off"/>
+              </div>
+              <div class="create-group-member-list-scroll">
+                <div class="create-group-member-picks" id="createGroupMemberPicks" role="list"></div>
+              </div>
+              <div class="create-group-members-empty" id="createGroupMembersEmptyHint" style="display:none;">No contacts yet — use invitations first.</div>
+            </div>
+          </div>
+          <div class="schedule-modal-footer create-group-modal-footer">
+            <button type="button" class="schedule-btn-cancel" id="cancelCreateGroupBtn">Cancel</button>
+            <button type="button" class="schedule-btn-confirm create-group-submit-btn" id="confirmCreateGroupBtn"><i class="fi fi-br-check"></i> Create group</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forward Message Modal -->
+      <div id="forwardModal" class="schedule-modal-overlay" style="display:none;">
+        <div class="schedule-modal-box forward-modal-box">
+          <div class="schedule-modal-header">
+            <i class="fi fi-rr-share"></i>
+            <h3>Forward Message</h3>
+            <button id="closeForwardModal"><i class="fi fi-rr-cross"></i></button>
+          </div>
+          <div class="forward-modal-body">
+            <div class="forward-msg-preview" id="forwardMsgPreview"></div>
+            <div class="forward-search-wrap">
+              <i class="fi fi-rr-search"></i>
+              <input type="text" id="forwardSearchInput" placeholder="Search contacts or groups…" autocomplete="off"/>
+            </div>
+            <div class="forward-list" id="forwardList"></div>
+          </div>
+          <div class="schedule-modal-footer">
+            <button class="schedule-btn-cancel" id="cancelForwardBtn">Cancel</button>
+            <button class="schedule-btn-confirm" id="confirmForwardBtn" disabled>
+              <i class="fi fi-rr-share"></i> Forward
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Modal -->
+      <div id="imageModal" class="image-modal">
+    <button id="imageModalClose" class="image-modal-close"><i class="fi fi-rr-cross"></i></button>
+    <img id="imageModalSrc" src="" alt="Full size image"/>
+  </div>
+
+  <!-- Set Chat Lock Modal -->
+  <div class="cr-custom-modal" id="setChatLockModal">
+      <div class="cr-custom-modal-content lock-modal-card">
+          <div class="lock-modal-icon-wrap"><i class="fi fi-sr-lock"></i></div>
+          <div class="cr-custom-modal-title">Lock Chat</div>
+          <div class="cr-custom-modal-desc">Enter a PIN or password to secure this chat. Minimum 4 characters.</div>
+          
+          <input type="password" id="setChatLockInput" class="cr-input lock-modal-input desktop-only-input" placeholder="Enter PIN / Password" readonly onfocus="this.removeAttribute('readonly');" />
+          
+          <div class="pin-pad mobile-only-pin">
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '1')">1</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '2')">2</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '3')">3</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '4')">4</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '5')">5</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '6')">6</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '7')">7</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '8')">8</button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '9')">9</button>
+              <button class="pin-btn pin-action" onclick="removePinChar('setChatLockInput')"><i class="fi fi-rr-delete"></i></button>
+              <button class="pin-btn" onclick="addPinChar('setChatLockInput', '0')">0</button>
+              <button class="pin-btn pin-action pin-submit" onclick="submitSetChatLock()"><i class="fi fi-br-check"></i></button>
+          </div>
+          
+          <div class="cr-custom-modal-actions lock-modal-actions">
+              <button class="cr-btn cr-btn-secondary" onclick="closeSetChatLockModal()">Cancel</button>
+              <button class="cr-btn cr-btn-primary desktop-only-input" onclick="submitSetChatLock()">Set Lock</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div id="delete-confirm-modal"
+       class="schedule-modal-overlay"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="delete-confirm-title"
+       style="display:none;">
+    <div class="schedule-modal-box">
+      <div class="schedule-modal-header">
+        <i class="fa-solid fa-trash"></i>
+        <h3 id="delete-confirm-title">Delete Message</h3>
+        <button id="delete-confirm-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="schedule-modal-body">
+        <p id="delete-confirm-text" class="delete-modal-body-text">
+          Delete this message? This cannot be undone.
+        </p>
+        <div class="delete-modal-actions">
+          <button id="delete-confirm-cancel" class="delete-modal-btn delete-modal-btn--cancel">
+            Cancel
+          </button>
+          <button id="delete-confirm-ok" class="delete-modal-btn delete-modal-btn--danger">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+   <!-- Delete For Me Modal -->
+   <div id="delete-for-me-modal"
+        class="schedule-modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-for-me-title"
+        style="display:none;">
+     <div class="schedule-modal-box">
+       <div class="schedule-modal-header">
+         <i class="fa-solid fa-eye-slash"></i>
+         <h3 id="delete-for-me-title">Delete for Me</h3>
+         <button id="delete-for-me-close" aria-label="Close">&times;</button>
+       </div>
+       <div class="schedule-modal-body">
+         <p class="delete-modal-body-text">
+           This message will only be removed from your view.
+           The sender's copy will remain unaffected.
+         </p>
+         <div class="delete-modal-actions">
+           <button id="delete-for-me-cancel" class="delete-modal-btn delete-modal-btn--cancel">
+             Cancel
+           </button>
+           <button id="delete-for-me-ok" class="delete-modal-btn delete-modal-btn--danger">
+             Delete for me
+           </button>
+         </div>
+       </div>
+     </div>
+   </div>
+
+   <!-- Call Notification Modal -->
+   <div id="call-notification-modal" class="call-notification-overlay" style="display:none;">
+     <div class="call-notification-box">
+       <div class="call-notification-header">
+         <div class="call-type-indicator">
+           <i class="fi fi-rr-video-camera call-video-icon"></i>
+           <span class="call-type-label">Video Call</span>
+         </div>
+         <button id="call-notification-close" class="call-notification-close-btn" aria-label="Close">
+           <i class="fi fi-rr-cross"></i>
+         </button>
+       </div>
+       <div class="call-notification-body">
+         <div class="call-avatar-container">
+           <div class="call-avatar" id="caller-avatar">
+             <i class="fi fi-sr-comment-dots"></i>
+           </div>
+           <div class="caller-info">
+             <div class="caller-name" id="caller-name">Incoming Call</div>
+             <div class="caller-status" id="caller-status">is calling...</div>
+           </div>
+         </div>
+         <div class="call-notification-actions">
+           <button id="decline-call-btn" class="call-action-btn call-decline-btn">
+             <i class="fi fi-rr-phone-slash"></i> Decline
+           </button>
+           <button id="accept-call-btn" class="call-action-btn call-accept-btn">
+             <i class="fi fi-rr-phone"></i> Accept
+           </button>
+         </div>
+       </div>
+     </div>
+   </div>
+ </body>
+</html>

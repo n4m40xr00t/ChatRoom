@@ -1,0 +1,60 @@
+# ============================================================
+#  ChatRoom — Root .gitignore
+#  Protects personal data, secrets, and build artifacts.
+# ============================================================
+
+# ---- H2 Database files (contain all user data & messages) ----
+*.mv.db
+*.trace.db
+chatdb*
+
+# ---- Maven build output ----
+**/target/
+**/!.mvn/wrapper/maven-wrapper.jar
+
+# ---- IDE files ----
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.code-workspace
+.project
+.classpath
+.factorypath
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+build/
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Logs ----
+*.log
+logs/
+spring.log
+
+# ---- Secrets & environment files ----
+.env
+.env.*
+*.secret
+secrets/
+application-prod.properties
+application-local.properties
+application-secret.properties
+*.p12
+
+# ---- Uploaded files / temp ----
+uploads/
+.uploads/
+temp/
+tmp/

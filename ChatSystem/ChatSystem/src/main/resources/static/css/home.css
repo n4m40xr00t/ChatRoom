@@ -1,0 +1,392 @@
+/* ============================================
+   ChatRoom — Home / Auth Pages (Login & Sign Up)
+   ============================================ */
+@import url('/css/variables.css');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { 
+  background-color: var(--clr-bg-deep); 
+  background-image: url('/images/bg/bg_01.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+
+
+/* ---- Page wrapper ---- */
+.container_login_and_sign_up_main {
+  width: 100%;
+  min-height: 100vh;
+  /* background-color removed to let body background show */
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: calc(var(--header-h) + 24px) 0 40px;
+}
+
+.container_of_section {
+  width: 100%;
+  min-height: calc(100vh - var(--header-h) - 24px);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+  padding: 0 40px;
+  gap: 40px;
+}
+
+/* ---- Left section (marketing text) ---- */
+.section_1 {
+  width: 42%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.text_wlcm {
+  color: var(--clr-text-primary);
+  font-family: var(--font-heading);
+}
+
+.big_text {
+  font-weight: 800;
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: 1.15;
+  background: linear-gradient(135deg, #e9f8f9 0%, #93c5fd 60%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.small_text {
+  width: 75%;
+  font-size: clamp(14px, 1.5vw, 17px);
+  font-family: var(--font-body);
+  color: var(--clr-text-secondary);
+  line-height: 1.65;
+}
+
+/* ---- Right section (form card) ---- */
+.section_2 {
+  display: flex;
+  width: 42%;
+  justify-content: center;
+  align-items: center;
+}
+
+.login_and_signup_cont_inner {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  align-items: center;
+  border-radius: var(--radius-xl);
+  background: rgba(23, 25, 29, 0.90);
+  backdrop-filter: blur(16px);
+  box-sizing: border-box;
+  padding: 40px 36px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--clr-border-md);
+  gap: 0;
+}
+
+/* Form heading (optional — placed inside form by template) */
+.form-heading {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--clr-text-primary);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* ---- Input group ---- */
+.input_cont_main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.input_cont {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: var(--radius-md);
+}
+
+.input_main {
+  width: 100%;
+  height: 46px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--clr-border-md);
+  background-color: rgba(255,255,255,0.06);
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--clr-text-primary);
+  /* max() prevents iOS from zooming on focus (needs ≥16px) */
+  font-size: max(16px, 14px);
+  font-weight: 400;
+  padding: 0 16px;
+  outline: none;
+  transition: var(--transition-fast);
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+.input_main::placeholder {
+  color: var(--clr-text-muted);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.input_main:focus {
+  border-color: rgba(37,99,235,0.6);
+  background-color: rgba(255,255,255,0.09);
+  box-shadow: 0 0 0 3px var(--clr-primary-dim);
+}
+.input_main:hover:not(:focus) {
+  border-color: var(--clr-border-hover);
+  background-color: rgba(255,255,255,0.08);
+}
+
+/* ---- Photo upload (create-account) ---- */
+.photo-upload-cont {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.photo-upload-label {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  border: 2px dashed rgba(233,248,249,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--clr-text-muted);
+  font-size: 11px;
+  text-align: center;
+  gap: 6px;
+  transition: border-color 0.25s;
+  font-family: var(--font-body);
+}
+.photo-upload-label:hover {
+  border-color: rgba(37,99,235,0.6);
+  color: var(--clr-text-secondary);
+}
+.photo-upload-label i { font-size: 22px; }
+.photo-upload-hint {
+  font-size: 11px;
+  color: var(--clr-text-muted);
+  font-family: var(--font-body);
+}
+
+/* ---- Error label ---- */
+.check {
+  width: 100%;
+  height: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  font-family: var(--font-body);
+  color: #fca5a5;
+  font-size: 12px;
+  background: var(--clr-danger-dim);
+  border: 1px solid rgba(220,38,38,0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  text-align: center;
+}
+
+/* ---- Buttons ---- */
+.buttons_main_cont {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.button_main_submit {
+  width: 100%;
+  min-height: 48px;
+  height: auto;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-hover));
+  text-align: center;
+  font-family: var(--font-heading);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-std);
+  box-shadow: var(--shadow-btn);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.button_main_submit:hover {
+  background: linear-gradient(135deg, var(--clr-primary-hover), #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px var(--clr-primary-glow);
+}
+.button_main_submit:active {
+  transform: translateY(0);
+}
+.button_main_submit span {
+  pointer-events: none;
+}
+
+.other_info_for_login_and_sign_up {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bottom_text {
+  width: 100%;
+  text-align: center;
+  color: var(--clr-text-muted);
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+.bottom_text a {
+  color: #93c5fd;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.bottom_text a:hover { color: #bfdbfe; }
+
+/* ---- Error param message (create-account) ---- */
+.param-error-msg {
+  color: #fca5a5;
+  font-size: 13px;
+  text-align: center;
+  font-family: var(--font-body);
+  background: var(--clr-danger-dim);
+  border: 1px solid rgba(220,38,38,0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  width: 100%;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .container_of_section { gap: 28px; padding: 0 28px; }
+  .section_1, .section_2 { width: 48%; }
+}
+
+@media (max-width: 900px) {
+  .container_of_section { flex-direction: column; padding: 24px 20px; }
+  .section_1 { width: 100%; }
+  .small_text { width: 100%; }
+  .section_2 { width: 100%; }
+  .big_text { font-size: 32px; }
+}
+
+@media (max-width: 480px) {
+  .login_and_signup_cont_inner { padding: 28px 20px; }
+  .input_main, .button_main_submit { touch-action: manipulation; }
+  .button_main_submit { min-height: 48px; }
+}
+
+@media (max-width: 380px) {
+  .container_of_section { padding: 16px 12px; }
+  .login_and_signup_cont_inner { padding: 20px 14px; }
+  .big_text { font-size: 26px; }
+  .form-heading { font-size: 20px; }
+  .input_cont_main { gap: 10px; }
+  .input_main { height: 40px; font-size: 13px; padding: 0 12px; }
+  .photo-upload-label { width: 64px; height: 64px; }
+}
+
+/* ---- Password Toggle & Policy ---- */
+.pw-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--clr-text-muted);
+  font-size: 14px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.pw-toggle-btn:hover {
+  color: var(--clr-text-secondary);
+}
+
+.password-policy {
+  width: 100%;
+  font-size: 11px;
+  color: var(--clr-text-muted);
+  font-family: var(--font-body);
+  text-align: left;
+  padding: 0 4px;
+  transition: all 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ============================================
+   MFA Verify page — OTP row on narrow screens
+   ============================================ */
+@media (max-width: 400px) {
+  /* Scale the whole OTP row to fit without overflow */
+  .mfa-otp-row {
+    gap: 5px;
+  }
+  .mfa-otp-digit {
+    width: calc((100% - 5px * 5 - 28px) / 6);
+    min-width: 32px;
+    height: 44px;
+    font-size: 18px !important;
+  }
+  .mfa-otp-sep {
+    font-size: 14px;
+    padding: 0;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 340px) {
+  .mfa-otp-sep { display: none; }
+  .mfa-otp-digit {
+    width: calc((100% - 5px * 5) / 6);
+    min-width: 28px;
+    height: 40px;
+    font-size: 16px !important;
+  }
+}

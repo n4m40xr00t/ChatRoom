@@ -1,0 +1,893 @@
+<!doctype html>
+<html
+    lang="en"
+    xmlns:th="http://www.thymeleaf.org"
+    th:attr="data-theme=${theme ?: 'dark'}"
+>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Call — ChatRoom</title>
+        <meta name="username" id="currentUsername" th:content="${username}" />
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <!-- Icons -->
+        <link
+            rel="stylesheet"
+            href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+
+        <!-- Styles -->
+        <link rel="stylesheet" href="/css/variables.css" />
+        <link rel="stylesheet" href="/css/reset.css" />
+        <link rel="stylesheet" href="/css/themes.css" />
+        <link rel="stylesheet" href="/css/call.css" />
+
+        <!-- Theme script (no defer — prevent flash) -->
+        <script src="/js/theme.js"></script>
+    </head>
+
+    <body>
+        <!-- ═══════════════════════════════════════════════════
+     CALL PAGE ROOT
+════════════════════════════════════════════════════ -->
+        <div class="cr-call-root" id="cr-call-root">
+            <!-- ── Animated background gradient blobs ── -->
+            <div class="cr-call-bg" aria-hidden="true">
+                <div class="cr-blob cr-blob-a"></div>
+                <div class="cr-blob cr-blob-b"></div>
+            </div>
+
+            <!-- ════════════════════════════════════════
+       SCREEN 1 — CONNECTING / CALLING / RINGING
+  ════════════════════════════════════════ -->
+            <section
+                class="cr-screen"
+                id="screen-connecting"
+                aria-label="Connecting"
+            >
+                <!-- Top breadcrumb bar -->
+                <div class="cr-topbar">
+                    <div class="cr-topbar-brand">
+                        <i class="fi fi-sr-comment-dots"></i>
+                        <span>ChatRoom</span>
+                    </div>
+                    <div class="cr-call-type-pill" id="call-type-pill">
+                        <i class="fas fa-video" id="call-type-icon"></i>
+                        <span id="call-type-text">Video Call</span>
+                    </div>
+                </div>
+
+                <!-- Avatar with animated pulse rings -->
+                <div class="cr-avatar-stage">
+                    <div class="cr-pulse-rings" id="pulse-rings">
+                        <span class="cr-ring cr-ring-3"></span>
+                        <span class="cr-ring cr-ring-2"></span>
+                        <span class="cr-ring cr-ring-1"></span>
+                    </div>
+                    <div class="cr-main-avatar" id="connecting-avatar">
+                        <img
+                            id="connecting-avatar-img"
+                            src=""
+                            alt=""
+                            style="display: none"
+                        />
+                        <span id="connecting-avatar-initial">?</span>
+                    </div>
+                </div>
+
+                <!-- Peer name & status -->
+                <div class="cr-peer-name" id="connecting-peer-name">
+                    Loading…
+                </div>
+                <div class="cr-call-status-text" id="connecting-status">
+                    <span class="cr-status-dot"></span>
+                    <span id="connecting-status-label">Calling…</span>
+                </div>
+
+                <!-- Cancel button -->
+                <div class="cr-connecting-footer">
+                    <button
+                        class="cr-btn-round cr-btn-end"
+                        id="cancel-call-btn"
+                        title="Cancel call"
+                        aria-label="Cancel call"
+                    >
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
+                    <span class="cr-btn-label">Cancel</span>
+                </div>
+            </section>
+
+            <!-- ════════════════════════════════════════
+       SCREEN 2 — ACTIVE CALL
+  ════════════════════════════════════════ -->
+            <section
+                class="cr-screen cr-screen--active hidden"
+                id="screen-active"
+                aria-label="Active call"
+            >
+                <!-- Remote video (full screen behind everything) -->
+                <video
+                    class="cr-video-remote"
+                    id="remote-video"
+                    autoplay
+                    playsinline
+                ></video>
+
+                <!-- Audio-call avatar fallback (shown when no remote video) -->
+                <div
+                    class="cr-audio-bg"
+                    id="audio-bg"
+                    aria-hidden="true"
+                    style="display: none"
+                >
+                    <div class="cr-audio-avatar" id="audio-avatar">
+                        <span id="audio-avatar-initial">?</span>
+                    </div>
+                </div>
+
+                <!-- Top status overlay -->
+                <div class="cr-active-topbar">
+                    <div class="cr-active-info">
+                        <div class="cr-active-name" id="active-peer-name">
+                            User
+                        </div>
+                        <div class="cr-active-sub" id="active-status-text">
+                            Connected
+                        </div>
+                    </div>
+                    <div class="cr-timer-pill" id="call-duration">00:00</div>
+                </div>
+
+                <!-- Local video — Picture-in-Picture -->
+                <div class="cr-local-pip" id="local-pip">
+                    <video
+                        class="cr-video-local"
+                        id="local-video"
+                        autoplay
+                        playsinline
+                        muted
+                    ></video>
+                    <div
+                        class="cr-pip-off-icon"
+                        id="pip-off-icon"
+                        style="display: none"
+                    >
+                        <i class="fas fa-video-slash"></i>
+                    </div>
+                    <span class="cr-pip-label">You</span>
+                </div>
+
+                <!-- Bottom controls bar -->
+                <div class="cr-controls-bar" id="cr-controls-bar">
+                    <!-- Mute -->
+                    <div class="cr-ctrl-wrap">
+                        <button
+                            class="cr-btn-round cr-btn-ctrl"
+                            id="toggle-audio"
+                            title="Mute / Unmute"
+                            aria-label="Toggle audio"
+                        >
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <span class="cr-ctrl-label">Mute</span>
+                    </div>
+
+                    <!-- End call (center, larger) -->
+                    <div class="cr-ctrl-wrap">
+                        <button
+                            class="cr-btn-round cr-btn-end cr-btn-end-lg"
+                            id="hang-up"
+                            title="End call"
+                            aria-label="End call"
+                        >
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                        <span class="cr-ctrl-label">End</span>
+                    </div>
+
+                    <!-- Camera -->
+                    <div class="cr-ctrl-wrap">
+                        <button
+                            class="cr-btn-round cr-btn-ctrl"
+                            id="toggle-video"
+                            title="Camera on / off"
+                            aria-label="Toggle video"
+                        >
+                            <i class="fas fa-video"></i>
+                        </button>
+                        <span class="cr-ctrl-label">Camera</span>
+                    </div>
+                </div>
+
+                <!-- Hidden accept/reject (not used on call page, kept for webrtc-call.js compat) -->
+                <div id="incoming-call-controls" style="display: none">
+                    <button id="accept-call" style="display: none"></button>
+                    <button id="reject-call" style="display: none"></button>
+                </div>
+
+                <!-- Call status (kept for webrtc-call.js compat, visually hidden) -->
+                <span id="call-status" style="display: none"></span>
+                <span id="call-state-text" style="display: none"></span>
+                <span id="remote-peer-name" style="display: none"></span>
+            </section>
+
+            <!-- ════════════════════════════════════════
+       SCREEN 3 — CALL ENDED
+  ════════════════════════════════════════ -->
+            <section
+                class="cr-screen cr-screen--ended hidden"
+                id="screen-ended"
+                aria-label="Call ended"
+            >
+                <div class="cr-ended-card">
+                    <div class="cr-ended-icon-wrap">
+                        <i class="fas fa-phone-slash"></i>
+                    </div>
+                    <div class="cr-ended-peer" id="ended-peer-name">User</div>
+                    <div class="cr-ended-title" id="ended-title">
+                        Call Ended
+                    </div>
+                    <div class="cr-ended-duration" id="ended-duration"></div>
+                    <a
+                        href="/chat"
+                        class="cr-ended-return-btn"
+                        id="return-to-chat"
+                    >
+                        <i class="fi fi-rr-comment-dots"></i>
+                        Return to Chat
+                    </a>
+                </div>
+            </section>
+        </div>
+        <!-- /cr-call-root -->
+
+        <!-- ═══════════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════════ -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        <script src="/js/webrtc-call.js"></script>
+
+        <script>
+            /* ═══════════════════════════════════════════════════
+   Call Page Controller
+   Orchestrates the call lifecycle and UI state transitions
+════════════════════════════════════════════════════ */
+            (function () {
+                "use strict";
+
+                // ── Parse page parameters ───────────────────────
+                const ME = document.getElementById("currentUsername").content;
+                const params = new URLSearchParams(window.location.search);
+                const TARGET_USER = params.get("user"); // remote peer username
+                const CALL_TYPE = params.get("type") || "video";
+                const IS_INCOMING = params.get("incoming") === "true";
+                // callId from URL = pre-established session created by /call-ring
+                const CALL_ID_PARAM = params.get("callId") || null;
+
+                // ── State ──────────────────────────────────────────────
+                let stompClient = null;
+                let callManager = null;
+                let remotePeer = TARGET_USER || "";
+                let callEnded = false;
+                let callDurationSec = 0;
+
+                // ── Avatar colour helper (mirrors chat.js) ─────────────
+                const AVATAR_COLOURS = [
+                    "#2563eb",
+                    "#7c3aed",
+                    "#db2777",
+                    "#059669",
+                    "#d97706",
+                    "#dc2626",
+                    "#0891b2",
+                    "#9333ea",
+                ];
+                function avatarColour(name) {
+                    let idx = 0;
+                    if (name) {
+                        for (let i = 0; i < name.length; i++)
+                            idx += name.charCodeAt(i);
+                    }
+                    return AVATAR_COLOURS[idx % AVATAR_COLOURS.length];
+                }
+                function initial(name) {
+                    return name ? name.charAt(0).toUpperCase() : "?";
+                }
+
+                // ── UI helpers ─────────────────────────────────────────
+                function showScreen(id) {
+                    [
+                        "screen-connecting",
+                        "screen-active",
+                        "screen-ended",
+                    ].forEach((s) => {
+                        const el = document.getElementById(s);
+                        if (el) el.classList.toggle("hidden", s !== id);
+                    });
+                }
+
+                function setPeerInfo(username, fullname, profilePic) {
+                    const display = fullname || username;
+                    const col = avatarColour(username);
+
+                    // Connecting screen
+                    const initEl = document.getElementById(
+                        "connecting-avatar-initial",
+                    );
+                    const imgEl = document.getElementById(
+                        "connecting-avatar-img",
+                    );
+                    const nameEl = document.getElementById(
+                        "connecting-peer-name",
+                    );
+                    const avatarEl =
+                        document.getElementById("connecting-avatar");
+
+                    if (initEl) initEl.textContent = initial(display);
+                    if (avatarEl) avatarEl.style.background = col;
+                    if (nameEl) nameEl.textContent = display;
+
+                    if (profilePic && imgEl) {
+                        imgEl.src = profilePic;
+                        imgEl.style.display = "block";
+                        if (initEl) initEl.style.display = "none";
+                    }
+
+                    // Audio bg avatar
+                    const audioInit = document.getElementById(
+                        "audio-avatar-initial",
+                    );
+                    const audioAvatar = document.getElementById("audio-avatar");
+                    if (audioInit) audioInit.textContent = initial(display);
+                    if (audioAvatar) audioAvatar.style.background = col;
+
+                    // Active screen name
+                    const activeNameEl =
+                        document.getElementById("active-peer-name");
+                    if (activeNameEl) activeNameEl.textContent = display;
+
+                    // Ended screen name
+                    const endedNameEl =
+                        document.getElementById("ended-peer-name");
+                    if (endedNameEl) endedNameEl.textContent = display;
+                }
+
+                function setCallTypeBadge(type) {
+                    const icon = document.getElementById("call-type-icon");
+                    const text = document.getElementById("call-type-text");
+                    if (icon)
+                        icon.className =
+                            type === "video" ? "fas fa-video" : "fas fa-phone";
+                    if (text)
+                        text.textContent =
+                            type === "video" ? "Video Call" : "Audio Call";
+                }
+
+                function setConnectingStatus(label) {
+                    const el = document.getElementById(
+                        "connecting-status-label",
+                    );
+                    if (el) el.textContent = label;
+                }
+
+                function showCallEnded(reason) {
+                    if (callEnded) return;
+                    callEnded = true;
+
+                    const secs = callDurationSec;
+                    const mins = Math.floor(secs / 60);
+                    const s = secs % 60;
+                    const dur =
+                        secs > 0
+                            ? `Duration: ${mins}:${s.toString().padStart(2, "0")}`
+                            : "";
+
+                    document.getElementById("ended-duration").textContent = dur;
+
+                    const titleMap = {
+                        rejected: "Call Declined",
+                        busy: "Line Busy",
+                        timeout: "No Answer",
+                        error: "Call Failed",
+                    };
+                    document.getElementById("ended-title").textContent =
+                        titleMap[reason] || "Call Ended";
+
+                    showScreen("screen-ended");
+                }
+
+                // ── Transition to active call (video or audio) ─────────
+                function activateCallUI(callType) {
+                    showScreen("screen-active");
+                    setCallTypeBadge(callType);
+
+                    if (callType === "audio") {
+                        // Hide video elements, show avatar background
+                        const rv = document.getElementById("remote-video");
+                        const pip = document.getElementById("local-pip");
+                        if (rv) rv.style.display = "none";
+                        if (pip) pip.style.display = "none";
+                        const audioBg = document.getElementById("audio-bg");
+                        if (audioBg) audioBg.style.display = "flex";
+                        // Ensure any video layout state is reset
+                        document
+                            .getElementById("screen-active")
+                            ?.classList.remove("cr-layout-local-full");
+                    } else {
+                        // Video call:
+                        // Default = YOUR camera fullscreen, other party in PiP.
+                        document
+                            .getElementById("screen-active")
+                            ?.classList.add("cr-layout-local-full");
+                    }
+
+                    document.getElementById("active-status-text").textContent =
+                        "Connected";
+                }
+
+                // ── Load remote peer profile from API ─────────────────
+                async function loadPeerProfile(username) {
+                    try {
+                        const res = await fetch(
+                            "/api/user/" +
+                                encodeURIComponent(username) +
+                                "/profile",
+                        );
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        setPeerInfo(
+                            data.username,
+                            data.fullname,
+                            data.profilePicture,
+                        );
+                    } catch (e) {
+                        setPeerInfo(username, username, null);
+                    }
+                }
+
+                // ── Fatal error → show ended screen ───────────────────
+                function fatalError(msg) {
+                    const title = document.getElementById("ended-title");
+                    const dur = document.getElementById("ended-duration");
+                    const icon = document.querySelector(
+                        "#screen-ended .cr-ended-icon-wrap i",
+                    );
+
+                    // Detect HTTPS / permission errors and give extra guidance
+                    const isHttpsErr =
+                        msg &&
+                        (msg.includes("HTTPS") ||
+                            msg.includes("secure") ||
+                            msg.includes("InsecureContext"));
+                    const isPermErr =
+                        msg &&
+                        (msg.includes("permission") ||
+                            msg.includes("denied") ||
+                            msg.includes("NotAllowed"));
+
+                    if (isHttpsErr) {
+                        if (icon) icon.className = "fas fa-lock";
+                        title.textContent = "Secure Connection Required";
+                        dur.innerHTML =
+                            '<span style="font-size:13px;color:var(--clr-text-secondary);max-width:260px;display:block;text-align:center;line-height:1.5;">' +
+                            "Video calls need HTTPS.&nbsp; Open the app with&nbsp;<strong>https://</strong>&nbsp;or ask your admin to enable SSL." +
+                            "</span>";
+                    } else if (isPermErr) {
+                        if (icon) icon.className = "fas fa-microphone-slash";
+                        title.textContent = "Permission Denied";
+                        dur.innerHTML =
+                            '<span style="font-size:13px;color:var(--clr-text-secondary);max-width:260px;display:block;text-align:center;line-height:1.5;">' +
+                            "Allow camera &amp; microphone access in your browser settings, then try again." +
+                            "</span>";
+                    } else {
+                        if (icon) icon.className = "fas fa-phone-slash";
+                        title.textContent = msg || "Call Failed";
+                        dur.textContent = "";
+                    }
+
+                    showScreen("screen-ended");
+                }
+
+                // ── WebSocket connect ──────────────────────────────────
+                function connectWS() {
+                    const socket = new SockJS("/ws");
+                    stompClient = Stomp.over(socket);
+                    stompClient.debug = null;
+
+                    stompClient.connect(
+                        {},
+                        function (frame) {
+                            console.log("[Call] WS connected");
+
+                            // WebRTCCallManager handles /user/call subscription internally
+                            callManager = new WebRTCCallManager(
+                                stompClient,
+                                ME,
+                            );
+
+                            // Override state-change callbacks
+                            overrideCallManagerCallbacks();
+
+                            if (IS_INCOMING) {
+                                handleIncomingCallPage();
+                            } else if (TARGET_USER) {
+                                handleOutgoingCallPage();
+                            } else {
+                                fatalError("Invalid call parameters");
+                            }
+                        },
+                        function (err) {
+                            console.error("[Call] WS error", err);
+                            fatalError("Connection failed. Please try again.");
+                        },
+                    );
+                }
+
+                // ── Override WebRTCCallManager signal handlers ─────────
+                function overrideCallManagerCallbacks() {
+                    // Patch handleCallSignal so UI transitions are driven from here
+                    const origHandleSignal =
+                        callManager.handleCallSignal.bind(callManager);
+                    callManager.handleCallSignal = async function (signal) {
+                        await origHandleSignal(signal);
+
+                        switch (signal.signalType) {
+                            case "CALL_RINGING":
+                                setConnectingStatus("Ringing…");
+                                break;
+                            case "CALL_ANSWER":
+                                // Caller received the SDP answer — WebRTC connection
+                                // is now being established. Show active screen and
+                                // start the timer (startCallTimer is idempotent).
+                                activateCallUI(
+                                    callManager.currentCallType || CALL_TYPE,
+                                );
+                                callManager.startCallTimer();
+                                break;
+                            case "CALL_ACCEPTED":
+                                // Callee received confirmation. Timer was already
+                                // started by answerIncomingCall; this is a no-op
+                                // thanks to the guard inside startCallTimer.
+                                activateCallUI(
+                                    callManager.currentCallType || CALL_TYPE,
+                                );
+                                callManager.startCallTimer();
+                                break;
+                            case "CALL_REJECTED":
+                                showCallEnded("rejected");
+                                break;
+                            case "CALL_ENDED":
+                                callDurationSec = callManager.callStartTime
+                                    ? Math.floor(
+                                          (Date.now() -
+                                              callManager.callStartTime) /
+                                              1000,
+                                      )
+                                    : 0;
+                                showCallEnded("ended");
+                                break;
+                            case "CALL_BUSY":
+                                showCallEnded("busy");
+                                break;
+                            case "CALL_UNAVAILABLE":
+                            case "CALL_TIMEOUT":
+                                showCallEnded("timeout");
+                                break;
+                            case "CALL_ERROR":
+                                showCallEnded("error");
+                                break;
+                        }
+                    };
+
+                    // Patch closeCall to transition to ended screen
+                    const origClose = callManager.closeCall.bind(callManager);
+                    callManager.closeCall = function () {
+                        callDurationSec = callManager.callStartTime
+                            ? Math.floor(
+                                  (Date.now() - callManager.callStartTime) /
+                                      1000,
+                              )
+                            : callDurationSec;
+                        origClose();
+                        if (!callEnded) showCallEnded("ended");
+                    };
+                }
+
+                // ── Outgoing call flow ─────────────────────────────────
+                // ── Outgoing call flow ───────────────────────────────────────────────
+                async function handleOutgoingCallPage() {
+                    await loadPeerProfile(TARGET_USER);
+                    setCallTypeBadge(CALL_TYPE);
+                    setConnectingStatus("Calling…");
+                    showScreen("screen-connecting");
+
+                    document
+                        .getElementById("cancel-call-btn")
+                        .addEventListener("click", function () {
+                            if (callManager) callManager.endCall();
+                            showCallEnded("ended");
+                        });
+
+                    try {
+                        // Pass CALL_ID_PARAM so the call window attaches its SDP to the
+                        // session pre-established by /call-ring on the chat page.
+                        await callManager.initiateCall(
+                            TARGET_USER,
+                            CALL_TYPE,
+                            CALL_ID_PARAM,
+                        );
+                    } catch (err) {
+                        console.error("[Call] initiateCall error", err);
+                    }
+                }
+
+                // ── Incoming (callee accepted on chat page) flow ───────
+                // ── Incoming (callee accepted on chat page) flow ─────────────────
+                async function handleIncomingCallPage() {
+                    let stored = null;
+                    try {
+                        const raw = sessionStorage.getItem("incomingCall");
+                        if (raw) {
+                            stored = JSON.parse(raw);
+                            sessionStorage.removeItem("incomingCall");
+                        }
+                    } catch (e) {
+                        /* ignore */
+                    }
+
+                    // Resolve caller info from sessionStorage or URL params
+                    const caller = stored?.caller || TARGET_USER || "Unknown";
+                    const callType = stored?.callType || CALL_TYPE;
+                    const callId = stored?.callId || CALL_ID_PARAM || null;
+
+                    if (!callId) {
+                        fatalError("Call session expired. Please try again.");
+                        return;
+                    }
+
+                    remotePeer = caller;
+                    await loadPeerProfile(caller);
+                    setCallTypeBadge(callType);
+                    showScreen("screen-connecting");
+
+                    document
+                        .getElementById("cancel-call-btn")
+                        .addEventListener("click", function () {
+                            if (callManager) callManager.endCall();
+                            showCallEnded("ended");
+                        });
+
+                    if (stored?.sdp) {
+                        // SDP arrived before the callee accepted — answer immediately
+                        setConnectingStatus("Connecting…");
+                        try {
+                            await callManager.answerIncomingCall(
+                                callId,
+                                stored.sdp,
+                                callType,
+                            );
+                            activateCallUI(callType);
+                        } catch (err) {
+                            console.error(
+                                "[Call] answerIncomingCall error",
+                                err,
+                            );
+                            fatalError(err.message || "Call setup failed");
+                        }
+                    } else {
+                        // Callee accepted before the SDP arrived (accepted the /call-ring
+                        // notification). Wait for the caller's call window to send the SDP.
+                        setConnectingStatus("Waiting for caller…");
+                        try {
+                            const offerSignal = await waitForSdpOffer(
+                                callId,
+                                caller,
+                                45000,
+                            );
+                            setConnectingStatus("Connecting…");
+                            await callManager.answerIncomingCall(
+                                offerSignal.callId,
+                                offerSignal.sdp,
+                                offerSignal.callType || callType,
+                            );
+                            activateCallUI(offerSignal.callType || callType);
+                        } catch (err) {
+                            console.error("[Call] waitForSdpOffer error", err);
+                            fatalError(err.message || "Call setup failed");
+                        }
+                    }
+                }
+
+                /**
+                 * Wait until a CALL_OFFER with SDP arrives for this call, or throw on timeout.
+                 * Patches callManager.handleCallSignal temporarily; restores it when done.
+                 */
+                function waitForSdpOffer(
+                    expectedCallId,
+                    expectedCaller,
+                    timeoutMs,
+                ) {
+                    return new Promise((resolve, reject) => {
+                        const orig =
+                            callManager.handleCallSignal.bind(callManager);
+
+                        const timer = setTimeout(() => {
+                            callManager.handleCallSignal = orig;
+                            reject(new Error("Call timed out"));
+                        }, timeoutMs);
+
+                        callManager.handleCallSignal = async function (signal) {
+                            if (
+                                signal.signalType === "CALL_OFFER" &&
+                                signal.sdp &&
+                                (signal.callId === expectedCallId ||
+                                    signal.caller === expectedCaller)
+                            ) {
+                                clearTimeout(timer);
+                                callManager.handleCallSignal = orig;
+                                resolve(signal);
+                                return;
+                            }
+                            // Forward end-of-call signals to the normal handler
+                            if (
+                                [
+                                    "CALL_ENDED",
+                                    "CALL_REJECTED",
+                                    "CALL_TIMEOUT",
+                                    "CALL_ERROR",
+                                ].includes(signal.signalType)
+                            ) {
+                                clearTimeout(timer);
+                                callManager.handleCallSignal = orig;
+                                await orig(signal);
+                                reject(new Error("Call ended by remote"));
+                                return;
+                            }
+                            await orig(signal);
+                        };
+                    });
+                }
+
+                // ── Control buttons (active call) ─────────────────────
+                document
+                    .getElementById("hang-up")
+                    .addEventListener("click", function () {
+                        if (callManager) callManager.endCall();
+                        // closeCall patches will trigger showCallEnded
+                    });
+
+                document
+                    .getElementById("toggle-audio")
+                    .addEventListener("click", function () {
+                        if (!callManager) return;
+                        callManager.toggleAudio();
+                        const isMuted =
+                            !callManager.localStream?.getAudioTracks()[0]
+                                ?.enabled;
+                        this.classList.toggle("cr-btn-active-off", isMuted);
+                        this.querySelector("i").className = isMuted
+                            ? "fas fa-microphone-slash"
+                            : "fas fa-microphone";
+                        this.nextElementSibling.textContent = isMuted
+                            ? "Unmute"
+                            : "Mute";
+                    });
+
+                document
+                    .getElementById("toggle-video")
+                    .addEventListener("click", function () {
+                        if (!callManager) return;
+                        callManager.toggleVideo();
+                        const videoTrack =
+                            callManager.localStream?.getVideoTracks()[0];
+                        const isOff = videoTrack ? !videoTrack.enabled : true;
+                        this.classList.toggle("cr-btn-active-off", isOff);
+                        this.querySelector("i").className = isOff
+                            ? "fas fa-video-slash"
+                            : "fas fa-video";
+                        this.nextElementSibling.textContent = isOff
+                            ? "Camera"
+                            : "Camera";
+
+                        // Show/hide local PiP off overlay
+                        const pipOff = document.getElementById("pip-off-icon");
+                        const localVid = document.getElementById("local-video");
+                        if (pipOff)
+                            pipOff.style.display = isOff ? "flex" : "none";
+                        if (localVid)
+                            localVid.style.opacity = isOff ? "0" : "1";
+                    });
+
+                // ── Tap/click to swap videos (local ↔ remote) ──────────
+                // Clicking your own camera view toggles between:
+                //   - Local fullscreen / Remote PiP (default)
+                //   - Remote fullscreen / Local PiP
+                (function setupVideoSwap() {
+                    const activeScreen =
+                        document.getElementById("screen-active");
+                    const localPip = document.getElementById("local-pip");
+                    if (!activeScreen || !localPip) return;
+
+                    localPip.addEventListener("click", function (e) {
+                        const type = callManager?.currentCallType || CALL_TYPE;
+                        if (type !== "video") return;
+                        activeScreen.classList.toggle("cr-layout-local-full");
+                    });
+                })();
+
+                // ── Handle remote video arriving ──────────────────────
+                // ontrack sets srcObject of #remote-video; we watch for it
+                const remoteVideo = document.getElementById("remote-video");
+                if (remoteVideo) {
+                    remoteVideo.addEventListener("loadedmetadata", function () {
+                        const audioBg = document.getElementById("audio-bg");
+                        if (audioBg) audioBg.style.display = "none";
+                    });
+                }
+
+                // ── Timer display (updated by webrtc-call.js timers) ──
+                // Override the timer so we can track duration for the ended screen
+                const origSetInterval = window.setInterval;
+                // The callManager uses setInterval for the timer and updates #call-duration
+                // We just read it from the callManager when needed
+
+                // ── Clean up on tab close ──────────────────────────────
+                window.addEventListener("beforeunload", function () {
+                    if (callManager && !callEnded) {
+                        callManager.endCall();
+                    }
+                    if (stompClient) {
+                        try {
+                            stompClient.disconnect();
+                        } catch (e) {
+                            /* ignore */
+                        }
+                    }
+                });
+
+                // ── Boot ───────────────────────────────────────────────
+                window.addEventListener("DOMContentLoaded", function () {
+                    if (!TARGET_USER && !IS_INCOMING) {
+                        fatalError("No target user specified");
+                        return;
+                    }
+
+                    // Pre-flight: warn immediately if WebRTC media won't work.
+                    // navigator.mediaDevices is undefined on HTTP (non-localhost) in Chrome.
+                    if (
+                        window.isSecureContext === false &&
+                        !navigator.mediaDevices &&
+                        !navigator.getUserMedia &&
+                        !navigator.webkitGetUserMedia
+                    ) {
+                        fatalError(
+                            "Calls require a secure connection (HTTPS). " +
+                                "Open the app via https:// or ask your admin to enable SSL.",
+                        );
+                        return;
+                    }
+
+                    connectWS();
+                });
+            })();
+        </script>
+    </body>
+</html>
