@@ -91,9 +91,20 @@
 
     // Wait for STOMP client to be available
     const checkStompInterval = setInterval(() => {
-      if (window.stompClient && window.stompClient.connected) {
-        clearInterval(checkStompInterval);
-        setupCallManager();
+      // StompJS 2.3.3 might not reliably expose .connected on the window object depending on scoping, 
+      // or we might need to check the underlying WebSocket state.
+      // We also check window.stompClient or just the global stompClient variable.
+      const client = window.stompClient || (typeof stompClient !== 'undefined' ? stompClient : null);
+      
+      if (client) {
+        // Check both the Stomp.js .connected property and the underlying SockJS readyState (1 = OPEN)
+        const isConnected = client.connected || (client.ws && client.ws.readyState === 1);
+        if (isConnected) {
+          clearInterval(checkStompInterval);
+          // Ensure we pass the resolved client to setupCallManager if we want
+          window.stompClient = client; // enforce it on window
+          setupCallManager();
+        }
       }
     }, 500);
 
@@ -108,7 +119,8 @@
    * Setup WebRTC call manager
    */
   function setupCallManager() {
-    const username = document.getElementById("currentUsername")?.content;
+    const userMeta = document.getElementById("currentUsername");
+    const username = userMeta ? (userMeta.content || userMeta.getAttribute("content")) : null;
     if (!username || !window.stompClient) {
       console.error(
         "Cannot initialize call manager: missing username or STOMP client",
