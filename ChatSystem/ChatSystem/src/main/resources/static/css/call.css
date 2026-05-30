@@ -449,6 +449,32 @@ body {
     backdrop-filter: blur(6px);
 }
 
+/* Connection quality badge */
+.cr-conn-quality-badge {
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    backdrop-filter: blur(6px);
+}
+.cr-quality--good {
+    background: rgba(22, 163, 74, 0.25);
+    color: #4ade80;
+    border: 1px solid rgba(22, 163, 74, 0.35);
+}
+.cr-quality--warn {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+}
+.cr-quality--bad {
+    background: rgba(220, 38, 38, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
 /* Local video PiP */
 .cr-local-pip {
     position: absolute;
@@ -462,12 +488,39 @@ body {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
     z-index: 10;
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: box-shadow 0.2s, border-color 0.2s;
+    user-select: none;
 }
 
 .cr-local-pip:hover {
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: scale(1.03);
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.75);
+}
+
+/* Drag handle shown at bottom of PiP */
+.cr-pip-drag-handle {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    cursor: grab;
+    z-index: 3;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s, color 0.2s;
+}
+.cr-pip-drag-handle:active {
+    cursor: grabbing;
+}
+.cr-local-pip:hover .cr-pip-drag-handle {
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .cr-video-local {
@@ -475,6 +528,12 @@ body {
     height: 100%;
     object-fit: cover;
     display: block;
+    /* Mirror effect applied via JS (scaleX(-1)) for selfie view */
+}
+
+/* Remote video always fills the frame on desktop */
+.cr-video-remote {
+    object-fit: cover;
 }
 
 /* When the local camera is the MAIN (fullscreen) view, avoid cropping the user's
@@ -861,12 +920,6 @@ body {
    RESPONSIVE
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-    /* On phones, avoid cropping remote video (letterbox instead). */
-    .cr-video-remote {
-        object-fit: contain;
-        background: #000;
-    }
-
     .cr-peer-name {
         font-size: 20px;
     }

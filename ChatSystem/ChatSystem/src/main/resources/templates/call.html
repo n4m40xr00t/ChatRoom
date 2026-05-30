@@ -152,10 +152,13 @@
                             Connected
                         </div>
                     </div>
-                    <div class="cr-timer-pill" id="call-duration">00:00</div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span class="cr-conn-quality-badge" id="cr-conn-quality" style="display:none"></span>
+                        <div class="cr-timer-pill" id="call-duration">00:00</div>
+                    </div>
                 </div>
 
-                <!-- Local video — Picture-in-Picture -->
+                <!-- Local video — Picture-in-Picture (draggable) -->
                 <div class="cr-local-pip" id="local-pip">
                     <video
                         class="cr-video-local"
@@ -171,7 +174,7 @@
                     >
                         <i class="fas fa-video-slash"></i>
                     </div>
-                    <span class="cr-pip-label">You</span>
+                    <span class="cr-pip-drag-handle" title="Drag to move"><i class="fas fa-grip-lines"></i></span>
                 </div>
 
                 <!-- Bottom controls bar -->
@@ -826,21 +829,126 @@
                             localVid.style.opacity = isOff ? "0" : "1";
                     });
 
-                // ── Tap/click to swap videos (local ↔ remote) ──────────
-                // Clicking your own camera view toggles between:
-                //   - Local fullscreen / Remote PiP (default)
-                //   - Remote fullscreen / Local PiP
+                // ── Draggable PiP + tap-to-swap ───────────────────────
                 (function setupVideoSwap() {
-                    const activeScreen =
-                        document.getElementById("screen-active");
-                    const localPip = document.getElementById("local-pip");
+                    const activeScreen = document.getElementById("screen-active");
+                    const localPip     = document.getElementById("local-pip");
+                    const remoteVideo  = document.getElementById("remote-video");
                     if (!activeScreen || !localPip) return;
 
+                    // --- Draggable PiP ---
+                    let dragging = false, startX, startY, initLeft, initTop;
+
+                    function pipPointerDown(e) {
+                        // Only drag on the handle or middle-click
+                        const handle = e.target.closest(".cr-pip-drag-handle");
+                        if (!handle && e.button !== 1) return;  // let plain clicks through
+                        if (activeScreen.classList.contains("cr-layout-local-full")) return;
+                        dragging = true;
+                        const rect = localPip.getBoundingClientRect();
+                        const touch = e.touches ? e.touches[0] : e;
+                        startX = touch.clientX;
+                        startY = touch.clientY;
+                        // Switch from bottom/right anchoring to top/left for free positioning
+                        localPip.style.right  = "auto";
+                        localPip.style.bottom = "auto";
+                        localPip.style.left   = rect.left + "px";
+                        localPip.style.top    = rect.top  + "px";
+                        initLeft = rect.left;
+                        initTop  = rect.top;
+                        localPip.style.transition = "none";
+                        e.preventDefault();
+                    }
+
+                    function pipPointerMove(e) {
+                        if (!dragging) return;
+                        const touch = e.touches ? e.touches[0] : e;
+                        const dx = touch.clientX - startX;
+                        const dy = touch.clientY - startY;
+                        const maxL = window.innerWidth  - localPip.offsetWidth  - 8;
+                        const maxT = window.innerHeight - localPip.offsetHeight - 8;
+                        localPip.style.left = Math.max(8, Math.min(maxL, initLeft + dx)) + "px";
+                        localPip.style.top  = Math.max(8, Math.min(maxT, initTop  + dy)) + "px";
+                    }
+
+                    function pipPointerUp(e) {
+                        if (!dragging) return;
+                        dragging = false;
+                        localPip.style.transition = "";
+                    }
+
+                    localPip.addEventListener("mousedown",  pipPointerDown);
+                    localPip.addEventListener("touchstart", pipPointerDown, { passive: false });
+                    document.addEventListener("mousemove",  pipPointerMove);
+                    document.addEventListener("touchmove",  pipPointerMove, { passive: false });
+                    document.addEventListener("mouseup",    pipPointerUp);
+                    document.addEventListener("touchend",   pipPointerUp);
+
+                    // --- Tap to swap local ↔ remote (only when not dragging) ---
                     localPip.addEventListener("click", function (e) {
+                        if (dragging) return;
                         const type = callManager?.currentCallType || CALL_TYPE;
                         if (type !== "video") return;
                         activeScreen.classList.toggle("cr-layout-local-full");
                     });
+                    if (remoteVideo) {
+                        remoteVideo.addEventListener("click", function () {
+                            const type = callManager?.currentCallType || CALL_TYPE;
+                            if (type !== "video") return;
+                            activeScreen.classList.toggle("cr-layout-local-full");
+                        });
+                    }
+                })();
+
+                // ── Auto-hide controls after 4 s of inactivity ────────
+                (function setupControlsAutoHide() {
+                    const bar         = document.getElementById("cr-controls-bar");
+                    const topbar      = document.querySelector(".cr-active-topbar");
+                    const activeScr   = document.getElementById("screen-active");
+                    if (!bar || !activeScr) return;
+
+                    let hideTimer = null;
+                    let hidden    = false;
+
+                    function showControls() {
+                        if (hidden) {
+                            bar.style.opacity    = "1";
+                            bar.style.pointerEvents = "all";
+                            if (topbar) { topbar.style.opacity = "1"; topbar.style.pointerEvents = "all"; }
+                            hidden = false;
+                        }
+                        resetTimer();
+                    }
+
+                    function hideControls() {
+                        bar.style.opacity    = "0";
+                        bar.style.pointerEvents = "none";
+                        if (topbar) { topbar.style.opacity = "0"; topbar.style.pointerEvents = "none"; }
+                        hidden = true;
+                    }
+
+                    function resetTimer() {
+                        if (hideTimer) clearTimeout(hideTimer);
+                        hideTimer = setTimeout(hideControls, 4000);
+                    }
+
+                    // Apply CSS transition
+                    bar.style.transition    = "opacity 0.35s ease";
+                    if (topbar) topbar.style.transition = "opacity 0.35s ease";
+
+                    ["mousemove", "click", "touchstart", "keydown"].forEach(function (ev) {
+                        activeScr.addEventListener(ev, showControls, { passive: true });
+                    });
+
+                    // Start the first hide timer when the call becomes active
+                    // (overrideCallManagerCallbacks sets screen-active visible)
+                    const observer = new MutationObserver(function () {
+                        if (!activeScr.classList.contains("hidden")) {
+                            resetTimer();
+                            observer.disconnect();
+                        }
+                    });
+                    observer.observe(activeScr, { attributes: true, attributeFilter: ["class", "style"] });
                 })();
 
                 // ── Handle remote video arriving ──────────────────────
@@ -852,12 +960,6 @@
                         if (audioBg) audioBg.style.display = "none";
                     });
                 }
-
-                // ── Timer display (updated by webrtc-call.js timers) ──
-                // Override the timer so we can track duration for the ended screen
-                const origSetInterval = window.setInterval;
-                // The callManager uses setInterval for the timer and updates #call-duration
-                // We just read it from the callManager when needed
 
                 // ── Clean up on tab close ──────────────────────────────
                 window.addEventListener("beforeunload", function () {

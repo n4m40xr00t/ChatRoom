@@ -631,7 +631,7 @@ class WebRTCCallManager {
       });
     }
 
-    // Trickle ICE — also used as a fallback for peers that don't support bundled SDP
+    // Trickle ICE
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         this.sendCallSignal({
@@ -646,28 +646,78 @@ class WebRTCCallManager {
       }
     };
 
-    // Attach incoming remote tracks to the remote video element
-    this.peerConnection.ontrack = (event) => {
-      console.log("Remote track received:", event.track.kind);
-      if (!this.remoteStream) {
-        this.remoteStream = new MediaStream();
-        const remoteVideo = document.getElementById("remote-video");
-        if (remoteVideo) remoteVideo.srcObject = this.remoteStream;
-      }
-      this.remoteStream.addTrack(event.track);
+    // ICE connection state — show connection quality indicator
+    this.peerConnection.oniceconnectionstatechange = () => {
+      const state = this.peerConnection.iceConnectionState;
+      console.log("[WebRTC] ICE state:", state);
+      this._updateConnectionQuality(state);
     };
 
-    // Close call automatically when connection drops
+    // Attach incoming remote tracks — use event.streams[0] when available
+    this.peerConnection.ontrack = (event) => {
+      console.log("[WebRTC] Remote track received:", event.track.kind);
+      // Prefer streams[0] which is already a proper MediaStream
+      if (event.streams && event.streams[0]) {
+        const remoteVideo = document.getElementById("remote-video");
+        if (remoteVideo && remoteVideo.srcObject !== event.streams[0]) {
+          remoteVideo.srcObject = event.streams[0];
+          this.remoteStream = event.streams[0];
+        }
+      } else {
+        // Fallback: build stream manually
+        if (!this.remoteStream) {
+          this.remoteStream = new MediaStream();
+          const remoteVideo = document.getElementById("remote-video");
+          if (remoteVideo) remoteVideo.srcObject = this.remoteStream;
+        }
+        this.remoteStream.addTrack(event.track);
+      }
+    };
+
+    // Connection state — handle disconnects with a short grace period
     this.peerConnection.onconnectionstatechange = () => {
-      console.log("Connection state:", this.peerConnection.connectionState);
-      if (
-        this.peerConnection.connectionState === "disconnected" ||
-        this.peerConnection.connectionState === "failed" ||
-        this.peerConnection.connectionState === "closed"
-      ) {
+      const state = this.peerConnection.connectionState;
+      console.log("[WebRTC] Connection state:", state);
+      if (state === "failed") {
+        this.showNotification("Call connection lost", "warning");
+        this.closeCall();
+      } else if (state === "disconnected") {
+        // Give 8 seconds for reconnect before hanging up
+        this._disconnectTimer = setTimeout(() => {
+          if (this.peerConnection?.connectionState === "disconnected") {
+            this.closeCall();
+          }
+        }, 8000);
+      } else if (state === "connected") {
+        if (this._disconnectTimer) {
+          clearTimeout(this._disconnectTimer);
+          this._disconnectTimer = null;
+        }
+      } else if (state === "closed") {
         this.closeCall();
       }
     };
+  }
+
+  /**
+   * Update the connection quality badge in the call UI.
+   */
+  _updateConnectionQuality(iceState) {
+    const badge = document.getElementById("cr-conn-quality");
+    if (!badge) return;
+    const map = {
+      checking:     { label: "Connecting", cls: "cr-quality--warn" },
+      connected:    { label: "Good",       cls: "cr-quality--good" },
+      completed:    { label: "Good",       cls: "cr-quality--good" },
+      disconnected: { label: "Unstable",   cls: "cr-quality--warn" },
+      failed:       { label: "Lost",       cls: "cr-quality--bad"  },
+      closed:       { label: "",           cls: ""                 },
+      new:          { label: "",           cls: ""                 },
+    };
+    const info = map[iceState] || { label: "", cls: "" };
+    badge.textContent = info.label;
+    badge.className = "cr-conn-quality-badge " + info.cls;
+    badge.style.display = info.label ? "block" : "none";
   }
 
   /**
@@ -715,12 +765,9 @@ class WebRTCCallManager {
   }
 
   /**
-   * Get local media stream
+   * Get local media stream with adaptive quality constraints.
    */
   async getLocalStream(callType) {
-    // Prefer portrait capture on phones and landscape on larger screens.
-    // NOTE: using only CSS px width can be wrong on mobile browsers that report a
-    // large layout viewport (e.g., ~980px). Use multiple signals.
     const isLikelyMobile =
       (navigator.userAgentData && navigator.userAgentData.mobile === true) ||
       (navigator.maxTouchPoints && navigator.maxTouchPoints > 1) ||
@@ -729,50 +776,42 @@ class WebRTCCallManager {
     const vw = window.visualViewport?.width || window.innerWidth || 0;
     const vh = window.visualViewport?.height || window.innerHeight || 0;
     const minDim = Math.min(vw, vh);
-
     const isPhone = isLikelyMobile && minDim <= 700;
-    const preferPortrait = isPhone;
+
+    // Progressive constraints: try HD first, fall back to lower res if denied
+    const videoConstraints = isPhone
+      ? { width: { ideal: 720 }, height: { ideal: 1280 }, frameRate: { ideal: 30, max: 30 }, facingMode: "user" }
+      : { width: { ideal: 1280, max: 1920 }, height: { ideal: 720, max: 1080 }, frameRate: { ideal: 30, max: 60 }, facingMode: "user" };
 
     const constraints = {
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
+        sampleRate: { ideal: 48000 },
       },
-      video:
-        callType === "video"
-          ? {
-              // On phones, request a portrait-ish frame; on desktop, request landscape.
-              width: { ideal: preferPortrait ? 720 : 1280 },
-              height: { ideal: preferPortrait ? 1280 : 720 },
-              // Hint to browsers that support aspectRatio selection.
-              aspectRatio: preferPortrait ? 9 / 16 : 16 / 9,
-              facingMode: "user",
-            }
-          : false,
+      video: callType === "video" ? videoConstraints : false,
     };
 
     try {
       this.localStream = await getUserMediaSafe(constraints);
     } catch (err) {
-      // Insecure context / not-supported: surface immediately, no fallback possible
-      if (
-        err.name === "InsecureContextError" ||
-        err.name === "NotSupportedError"
-      ) {
+      if (err.name === "InsecureContextError" || err.name === "NotSupportedError") {
         throw err;
       }
-      // Camera not found on a video call → fall back to audio-only
-      if (
-        callType === "video" &&
-        (err.name === "NotFoundError" || err.name === "NotReadableError")
-      ) {
-        this.showNotification(
-          "Camera unavailable — starting audio call instead",
-          "warning",
-        );
+      // Retry with minimal constraints on OverconstrainedError
+      if (callType === "video" && (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError")) {
+        console.warn("[WebRTC] HD constraints failed, retrying with basic video");
+        try {
+          this.localStream = await getUserMediaSafe({ audio: constraints.audio, video: { facingMode: "user" } });
+        } catch (err2) {
+          this.showNotification("Camera unavailable — starting audio call instead", "warning");
+          this.currentCallType = "audio";
+          this.localStream = await getUserMediaSafe({ audio: constraints.audio });
+        }
+      } else if (callType === "video" && (err.name === "NotFoundError" || err.name === "NotReadableError")) {
+        this.showNotification("Camera unavailable — starting audio call instead", "warning");
         this.currentCallType = "audio";
-        constraints.video = false;
         this.localStream = await getUserMediaSafe({ audio: constraints.audio });
       } else {
         throw err;
@@ -780,7 +819,11 @@ class WebRTCCallManager {
     }
 
     const localVideo = document.getElementById("local-video");
-    if (localVideo) localVideo.srcObject = this.localStream;
+    if (localVideo) {
+      localVideo.srcObject = this.localStream;
+      // Mirror local preview (selfie/front-camera view)
+      localVideo.style.transform = "scaleX(-1)";
+    }
 
     // Hide video elements for audio-only calls
     if (this.currentCallType === "audio" || callType === "audio") {
