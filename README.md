@@ -10,6 +10,9 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 ![Database](https://img.shields.io/badge/Database-H2%20%2F%20PostgreSQL%20%2F%20MySQL-yellow?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
+> 📸 **Main-Chat Interface**
+![ChatRoom Main Interface](screenshots/main-chat.png)
+
 ---
 
 ## Features
@@ -32,6 +35,9 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 - Typing indicators
 - Read receipts (delivered / read) with per-user tracking for group chats
 - Unread message badges
+
+> 📸 **Messaging interface**
+![Messaging Features](screenshots/messaging.png)
 
 ### Security
 - **Encryption at Rest: AES-256-GCM** encryption for all messages stored in the database (Note: This is server-side encryption at rest, not End-to-End Encryption)
@@ -58,6 +64,7 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 - Call history and statistics (total, answered, missed, duration)
 - Stale session cleanup on crash or force-close
 
+
 ### Multi-Factor Authentication
 - TOTP-based MFA (RFC 6238, 6-digit codes, 30-second window)
 - QR code generation for authenticator app setup
@@ -66,6 +73,9 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 - MFA login flow with session rotation
 - 30-second countdown ring on OTP input
 
+> 📸 **MFA intallation wizard**
+![MFA Setup](screenshots/mfa-setup.png)
+
 ### Appearance
 - 6 built-in themes: Dark, Midnight, Ocean, Forest, Rose, Slate
 - 5 chat background patterns: None, Dots, Grid, Waves, Bubbles
@@ -73,6 +83,9 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 - Instant live preview without page reload
 - **Real-time mini chat preview** on the settings page — mock conversation bubbles update instantly as you pick themes and backgrounds
 - Zero flash on load (theme applied server-side via Thymeleaf + synced to localStorage)
+
+> 📸 **Settings page**
+![Settings](screenshots/settings.png)
 
 ### Profile & Settings
 - Profile photo upload (PNG/JPG/WebP/GIF, max 5 MB, stored as base64)
@@ -83,6 +96,9 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 - Theme & chat background picker with **real-time mini chat preview**
 - **Staggered fade-in card animations** with hover lift/glow effects on all setting panels
 - Invite link generation and acceptance
+
+> 📸 **Settings page**
+![Settings](screenshots/theme-picker.png)
 
 ### Contact & Group Management
 - Invitation link system (one-time-use tokens)
@@ -97,6 +113,9 @@ A modern, fully responsive, real-time messaging application built with **Spring 
 - Global announcements (broadcast to public chat)
 - Stats: total messages, users, online count, groups
 - 7-day message activity chart
+
+> 📸 **Admin Dashboard**
+![Admin Dashboard](screenshots/admin-dashboard.png)
 
 ---
 
@@ -224,6 +243,9 @@ If you wish to run with HTTPS natively, you must generate a `keystore.p12` and u
 ```
 http://localhost:8080
 ```
+
+> 📸 **Login / Sign-Up page**
+![Login Page](screenshots/login.png)
 
 ---
 
